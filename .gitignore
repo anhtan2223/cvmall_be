@@ -1,0 +1,14 @@
+/Application/Application.Common/obj
+/Application/Application.Common/bin
+/Domain/obj
+/Domain/bin
+/Framework/Framework.Core/bin
+/Framework/Framework.Core/obj
+/Infrastructure/obj
+/Infrastructure/bin
+/Presentation/WebAPI/bin
+/Presentation/WebAPI/obj
+/Presentation/WebAPI/wwwroot/Uploads
+/.vs
+/Application/Application.Core/obj
+/Application/Application.Core/bin

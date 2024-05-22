@@ -1,0 +1,64 @@
+variables:
+  IMAGE_TAG: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
+
+stages:
+  - build
+  - deploy-dev
+  - deploy-staging
+  - clean-up
+  - roll-back
+
+start_build:
+  stage: build
+  script:
+    - docker-compose build
+    - docker image tag $PROJECT_NAME:$IMAGE_TAG $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+    - docker push $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+    - docker rmi $PROJECT_NAME:$IMAGE_TAG $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+  rules:
+    - if: ($CI_COMMIT_REF_NAME == "develop" || $CI_COMMIT_REF_NAME == "staging" || $CI_COMMIT_REF_NAME == "production")
+
+deploy-dev:
+  stage: deploy-dev
+  script:
+    - |
+      cat << EOF > deploy.sh
+      #!/bin/sh
+      docker pull $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+      docker rm -f $PROJECT_NAME
+      docker run --restart unless-stopped --name=$PROJECT_NAME -dp $PORT_API:80 -v /home/projects/qldp/template/:/app/qldp_template/:rw -v /home/projects/qldp/uploads/:/app/uploads/:rw -v /home/projects/qldp/convert/:/app/convert/:rw -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_DIR_UPLOAD=/app/uploads -e ASPNETCORE_DIR_EXCEL_TEMPLATE=/app/qldp_template -e ASPNETCORE_CONVERT_DIR_EXCEL=/app/convert/excel -e ASPNETCORE_API_DOMAIN=http://10.32.4.150:51 -e ASPNETCORE_SERVICE_CONVERT=http://10.32.4.150:33 $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+      EOF
+    - scp deploy.sh $SSH_USER@$SERVER_DEV:~/deploy.sh
+    - ssh $SSH_USER@$SERVER_DEV "docker login -u $REGISTRY_USER -p $REGISTRY_PASS $CI_REGISTRY && chmod +x ~/deploy.sh && ~/deploy.sh && rm -rf ~/deploy.sh"
+  rules:
+    - if: ($CI_COMMIT_REF_NAME == "develop")
+
+deploy-staging:
+  stage: deploy-staging
+  script:
+    - |
+      cat << EOF > deploy.sh
+      #!/bin/sh
+      docker pull $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+      docker rm -f $PROJECT_NAME
+      docker run --restart unless-stopped --name=$PROJECT_NAME -dp $PORT_API:80 -v /home/projects/qldp/template/:/app/qldp_template/:rw -v /home/projects/qldp/uploads/:/app/uploads/:rw -v /home/projects/qldp/convert/:/app/convert/:rw -e ASPNETCORE_ENVIRONMENT=Staging -e ASPNETCORE_DIR_UPLOAD=/app/uploads -e ASPNETCORE_DIR_EXCEL_TEMPLATE=/app/qldp_template -e ASPNETCORE_CONVERT_DIR_EXCEL=/app/convert/excel -e ASPNETCORE_API_DOMAIN=http://10.32.4.151:30 -e ASPNETCORE_SERVICE_CONVERT=http://10.32.4.151:33 $CI_REGISTRY/$PROJECT_NAME:$IMAGE_TAG
+      EOF
+    - scp deploy.sh $SSH_USER@$SERVER_STAGING:~/deploy.sh
+    - ssh $SSH_USER@$SERVER_STAGING "docker login -u $REGISTRY_USER -p $REGISTRY_PASS $CI_REGISTRY && chmod +x ~/deploy.sh && ~/deploy.sh && rm -rf ~/deploy.sh"
+  rules:
+    - if: ($CI_COMMIT_REF_NAME == "staging")
+
+clean-up:
+  stage: clean-up
+  script: 
+    - cd $PATH_REGISTRY_PROJECT && ls -lt | grep "$CI_COMMIT_REF_NAME-*" | tail -n +4 | awk '{print $NF}' | xargs -I {} rm -rf {}
+    - |
+      cat << EOF > checkImages.sh
+      #!/bin/bash
+      docker images $CI_REGISTRY/$PROJECT_NAME:$CI_COMMIT_REF_NAME-* --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | sort -k 2 -r | awk 'NR>2{print $1}' | xargs -r docker rmi
+      echo "clean up done."
+      EOF
+    - scp checkImages.sh $SSH_USER@$SERVER_DEV:~/checkImages.sh
+    - ssh $SSH_USER@$SERVER_DEV "chmod +x ~/checkImages.sh && ~/checkImages.sh && rm -rf ~/checkImages.sh"
+  rules:
+    - if: ($CI_COMMIT_REF_NAME == "develop" || $CI_COMMIT_REF_NAME == "staging")

@@ -1,0 +1,11 @@
+version: '3.4'
+services:
+  min_saas_api:
+    container_name: ${PROJECT_NAME}
+    build:
+      context: .
+      dockerfile: "./Presentation/WebAPI/Dockerfile"
+    restart: always
+    image: ${PROJECT_NAME}:${IMAGE_TAG}
+    ports:
+      - "81:80"
