@@ -8,6 +8,10 @@
 
         public bool? is_actived { get; set; }
 
+        public string user_code { get; set; }
+
+        public string branch { get; set; }
+
         public string name { get; set; }
 
         public string gender { get; set; }

@@ -11,9 +11,9 @@ namespace Domain.Entities
             id = Guid.NewGuid();
         }
 
-        //public string user_code { get; set; }
+        public string user_code { get; set; }
 
-        //public string branch { get; set; }
+        public string branch { get; set; }
 
         public string furigana { get; set; }
 
