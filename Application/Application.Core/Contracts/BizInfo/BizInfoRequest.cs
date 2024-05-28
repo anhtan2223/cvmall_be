@@ -7,6 +7,8 @@ namespace Application.Core.Contracts
 {
     public class BizInfoRequest
     {
+        public Guid id { get; set; }
+
         public string prj_name { get; set; }
 
         public string prj_content { get; set; }

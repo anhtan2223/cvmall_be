@@ -16,7 +16,7 @@
 
         public string gender { get; set; }
 
-        public string birthday { get; set; }
+        public DateTime birthday { get; set; }
 
         public string? last_university_name { get; set; }
 

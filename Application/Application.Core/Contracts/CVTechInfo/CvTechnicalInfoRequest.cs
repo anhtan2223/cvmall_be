@@ -7,6 +7,8 @@ namespace Application.Core.Contracts
 {
     public class CvTechnicalInfoRequest
     {
+        public Guid id { get; set; }
+
         public Guid CvInfoId { get; set; }
 
         public Guid TechnicalId { get; set; }

@@ -63,6 +63,10 @@ namespace Application.Core.Contracts
 
         public string? note { get; set; }
 
+        public List<CvTechnicalInfoRequest> cvTechInfos { get; set; }
+
+        public List<BizInfoRequest> bizInfos { get; set; }
+
         public class CvInfoRequestValidator : AbstractValidator<CvInfoRequest>
         {
             public CvInfoRequestValidator(IUnitOfWork _unitOfWork, ILocalizeServices _ls)
@@ -72,7 +76,15 @@ namespace Application.Core.Contracts
                 RuleFor(_ => _.furigana).MaximumLength(50);
                 RuleFor(_ => _.name).NotNullOrEmpty().MaximumLength(50);
                 RuleFor(_ => _.gender).NotNullOrEmpty().MaximumLength(1);
-                RuleFor(_ => _.birthday).IsValidDateTime(_ls);
+                //RuleFor(_ => _.birthday).IsValidDateTime(_ls);
+                RuleFor(_ => _.lang1_hearing).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang1_speaking).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang1_reading).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang1_writing).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang2_hearing).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang2_speaking).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang2_reading).ExclusiveBetween(1, 3);
+                RuleFor(_ => _.lang2_writing).ExclusiveBetween(1, 3);
             }
         }
     }

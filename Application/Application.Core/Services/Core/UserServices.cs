@@ -124,7 +124,10 @@ namespace Application.Core.Services.Core
         public async Task<UserResponse> GetInfoLoginById(Guid id)
         {
             var data = await GetById(id);
-            data.permissions = await GetPermissionsByUserId(id);
+            if(data != null)
+            {
+                data.permissions = await GetPermissionsByUserId(id);
+            }
             return data;
         }
 
