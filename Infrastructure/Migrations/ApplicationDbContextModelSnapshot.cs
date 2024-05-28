@@ -179,12 +179,11 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("gender")
-                        .IsRequired()
+                    b.Property<int>("gender")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
-                        .HasDefaultValue("0");
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<int?>("graduation_year")
                         .HasColumnType("integer");

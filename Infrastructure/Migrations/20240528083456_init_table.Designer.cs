@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240520021243_update_table")]
-    partial class update_table
+    [Migration("20240528083456_init_table")]
+    partial class init_table
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -135,6 +135,10 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("birthday")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("branch")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("certificate1_name")
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
@@ -177,12 +181,11 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("gender")
-                        .IsRequired()
+                    b.Property<int>("gender")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
-                        .HasDefaultValue("0");
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<int?>("graduation_year")
                         .HasColumnType("integer");
@@ -242,6 +245,10 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid?>("updated_by")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("user_code")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("work_process")
                         .HasMaxLength(500)

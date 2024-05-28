@@ -106,10 +106,12 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_code = table.Column<string>(type: "text", nullable: false),
+                    branch = table.Column<string>(type: "text", nullable: false),
                     furigana = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     is_actived = table.Column<bool>(type: "boolean", maxLength: 1, nullable: true, defaultValue: false),
                     name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    gender = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: false, defaultValue: "0"),
+                    gender = table.Column<int>(type: "integer", maxLength: 1, nullable: false, defaultValue: 0),
                     birthday = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     last_university_name = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
                     subject = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),

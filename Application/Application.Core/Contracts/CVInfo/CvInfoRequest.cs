@@ -17,7 +17,7 @@ namespace Application.Core.Contracts
 
         public string name { get; set; }
 
-        public string gender { get; set; }
+        public int gender { get; set; }
 
         public DateTime birthday { get; set; }
 
@@ -75,8 +75,7 @@ namespace Application.Core.Contracts
 
                 RuleFor(_ => _.furigana).MaximumLength(50);
                 RuleFor(_ => _.name).NotNullOrEmpty().MaximumLength(50);
-                RuleFor(_ => _.gender).NotNullOrEmpty().MaximumLength(1);
-                //RuleFor(_ => _.birthday).IsValidDateTime(_ls);
+                RuleFor(_ => _.gender).NotNullOrEmpty().ExclusiveBetween(0, 1);
                 RuleFor(_ => _.lang1_hearing).ExclusiveBetween(1, 3);
                 RuleFor(_ => _.lang1_speaking).ExclusiveBetween(1, 3);
                 RuleFor(_ => _.lang1_reading).ExclusiveBetween(1, 3);

@@ -21,7 +21,7 @@ namespace Domain.Entities
 
         public string name { get; set; }
 
-        public string gender { get; set; }
+        public int gender { get; set; }
 
         public DateTime birthday { get; set; }
 
