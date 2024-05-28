@@ -30,13 +30,13 @@ RUN mkdir /app
 WORKDIR /app
 COPY --from=build /app/publish .
 
-RUN apt-get update -y && apt-get install -y wget ca-certificates gnupg
+# RUN apt-get update -y && apt-get install -y wget ca-certificates gnupg
 
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes --output /usr/share/keyrings/apt.postgresql.org-archive-keyring.gpg
+# RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes --output /usr/share/keyrings/apt.postgresql.org-archive-keyring.gpg
 
-RUN echo "deb [signed-by=/usr/share/keyrings/apt.postgresql.org-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+# RUN echo "deb [signed-by=/usr/share/keyrings/apt.postgresql.org-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
-RUN apt-get update && apt-get install -y postgresql-client-14
+# RUN apt-get update && apt-get install -y postgresql-client-14
 
 EXPOSE 80
 
