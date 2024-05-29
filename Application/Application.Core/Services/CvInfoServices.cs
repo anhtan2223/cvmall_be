@@ -29,6 +29,12 @@ namespace Application.Core.Services.Core
                     .Include(y => y.bizInfos)
                     .ToPagedListAsync(request.page, request.size);
 
+            foreach (var cvInfo in cvInfos.data)
+            {
+                cvInfo.cvTechInfos = cvInfo?.cvTechInfos?.Where(cvTechInfo => !cvTechInfo.del_flg).ToList();
+                cvInfo.bizInfos = cvInfo?.bizInfos?.Where(bizInfo => !bizInfo.del_flg).ToList();
+            }
+
             var dataMapping = _mapper.Map<PagedList<CvInfoResponse>>(cvInfos);
 
             return dataMapping;
@@ -60,6 +66,15 @@ namespace Application.Core.Services.Core
                                   .Include(x => x.cvTechInfos)
                                   .Include(x => x.bizInfos)
                                   .FirstOrDefault();
+            if (entity != null)
+            {
+                entity.cvTechInfos = entity.cvTechInfos
+                                           .Where(x => !x.del_flg)
+                                           .ToList();
+                entity.bizInfos = entity.bizInfos
+                                           .Where(x => !x.del_flg)
+                                           .ToList();
+            }
 
             var data = _mapper.Map<CvInfoResponse>(entity);
 
@@ -76,35 +91,7 @@ namespace Application.Core.Services.Core
 
             await cvInfoRepository.AddEntityAsync(cvInfo);
 
-            if(request.cvTechInfos?.Count > 0)
-            {
-                foreach(var itemCvTechs in request.cvTechInfos)
-                {
-                    if(itemCvTechs != null)
-                    {
-                        CvTechnicalInfo cvTechEntity = _mapper.Map<CvTechnicalInfo>(itemCvTechs);
-
-                        await _unitOfWork.GetRepository<CvTechnicalInfo>()
-                                        .AddEntityAsync(cvTechEntity);
-                    }
-                }
-            }
-
-            if (request.bizInfos?.Count > 0)
-            {
-                foreach (var itemBizInfo in request.bizInfos)
-                {
-                    if (itemBizInfo != null)
-                    {
-                        BizInfo bizInfoEntity = _mapper.Map<BizInfo>(itemBizInfo);
-
-                        await _unitOfWork.GetRepository<BizInfo>()
-                                        .AddEntityAsync(bizInfoEntity);
-                    }
-                }
-            }
-
-            count = await _unitOfWork.SaveChangesAsync();
+            count += await _unitOfWork.SaveChangesAsync();
 
             return count;
         }
@@ -123,6 +110,7 @@ namespace Application.Core.Services.Core
                 return count;
 
             _mapper.Map(request, entity);
+
             await cvInfoRepository.UpdateEntityAsync(entity);
 
             var cvTechEntityList = _unitOfWork.GetRepository<CvTechnicalInfo>()
@@ -139,9 +127,9 @@ namespace Application.Core.Services.Core
 
             var bizInfoRequestList = request.bizInfos;
 
-            if(cvTechRequestList?.Count > 0)
+            if (cvTechRequestList?.Count > 0)
             {
-                // Update or Delete cvtechnical
+                // Delete cvtechnical
                 foreach (var itemcvTechEntity in cvTechEntityList)
                 {
                     var cvTechinRq = cvTechRequestList.Find(x => x.id == itemcvTechEntity.id);
@@ -151,26 +139,18 @@ namespace Application.Core.Services.Core
                         await _unitOfWork.GetRepository<CvTechnicalInfo>()
                                     .DeleteEntityAsync(itemcvTechEntity);
                     }
-                    else
-                    {
-                        _mapper.Map(cvTechinRq, itemcvTechEntity);
-
-                        await _unitOfWork.GetRepository<CvTechnicalInfo>().UpdateEntityAsync(itemcvTechEntity);
-
-                        cvTechRequestList.Remove(cvTechinRq);
-                    }
                 }
-
-                // Add cvTechnical
-                foreach (var itemCvtechRq in cvTechRequestList)
+            }
+            else
+            {
+                foreach (var itemcvTechEntity in cvTechEntityList)
                 {
-                    var cvTech = _mapper.Map<CvTechnicalInfo>(itemCvtechRq);
-
-                    await _unitOfWork.GetRepository<CvTechnicalInfo>().AddEntityAsync(cvTech);
+                    await _unitOfWork.GetRepository<CvTechnicalInfo>()
+                                    .DeleteEntityAsync(itemcvTechEntity);
                 }
             }
 
-            if(bizInfoRequestList?.Count > 0)
+            if (bizInfoRequestList?.Count > 0)
             {
                 // Update or Delete biz info
                 foreach (var itemBizEntity in bizInfoEntityList)
@@ -182,22 +162,14 @@ namespace Application.Core.Services.Core
                         await _unitOfWork.GetRepository<BizInfo>()
                                     .DeleteEntityAsync(itemBizEntity);
                     }
-                    else
-                    {
-                        _mapper.Map(cvBizinRq, itemBizEntity);
-
-                        await _unitOfWork.GetRepository<BizInfo>().UpdateEntityAsync(itemBizEntity);
-
-                        bizInfoRequestList.Remove(cvBizinRq);
-                    }
                 }
-
-                // Add cvTechnical
-                foreach (var itemBizInfoRq in bizInfoRequestList)
+            }
+            else
+            {
+                foreach (var itemBizEntity in bizInfoEntityList)
                 {
-                    var cvTech = _mapper.Map<BizInfo>(itemBizInfoRq);
-
-                    await _unitOfWork.GetRepository<BizInfo>().AddEntityAsync(cvTech);
+                    await _unitOfWork.GetRepository<BizInfo>()
+                                    .DeleteEntityAsync(itemBizEntity);
                 }
             }
 

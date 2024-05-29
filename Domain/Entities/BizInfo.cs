@@ -6,7 +6,7 @@ namespace Domain.Entities
     {
         public string prj_name { get; set; }
 
-        public string prj_content { get; set; }
+        public string? prj_content { get; set; }
 
         public int period { get; set; }
 
@@ -26,9 +26,9 @@ namespace Domain.Entities
 
         public bool operation { get; set; }
 
-        public string os_db { get; set; }
+        public string? os_db { get; set; }
 
-        public string language { get; set; }
+        public string? language { get; set; }
 
         public string role { get; set; }
 
