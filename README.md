@@ -31,9 +31,11 @@
 - Then
 
   ```sh
-  dotnet-ef migrations add "init_databse" --project .\Infrastructure --startup-project .\Presentation\WebAPI --context "ApplicationDbContext"
+  dotnet ef migrations add "init_databse" --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
+  ```
 
-  dotnet-ef database update --project .\Infrastructure --startup-project .\Presentation\WebAPI --context "ApplicationDbContext"
+  ```sh
+  dotnet ef database update --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
 
 ## Create new API
