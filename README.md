@@ -38,6 +38,11 @@
   dotnet ef database update --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
 
+  ## To run Project
+  ```sh
+  cd Presentation/WebAPI && dotnet run
+  ```
+
 ## Create new API
 
 1. Create new controller in `DMS.Api\Controllers`
