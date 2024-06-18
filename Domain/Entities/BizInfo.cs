@@ -5,8 +5,10 @@ namespace Domain.Entities
     public partial class BizInfo : BaseOrgEntity
     {
         public string prj_name { get; set; }
+        public string? prj_name_jp { get; set; }
 
         public string? prj_content { get; set; }
+        public string? prj_content_jp { get; set; }
 
         public int period { get; set; }
 
@@ -31,6 +33,7 @@ namespace Domain.Entities
         public string? language { get; set; }
 
         public string role { get; set; }
+        public string? role_jp { get; set; }
 
         public Guid cvInfoId { get; set; }
 
