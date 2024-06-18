@@ -5,8 +5,10 @@
         public Guid id { get; set; }
 
         public string prj_name { get; set; }
+        public string? prj_name_jp { get; set; }
 
         public string prj_content { get; set; }
+        public string? prj_content_jp { get; set; }
 
         public int period { get; set; }
 
@@ -31,6 +33,7 @@
         public string language { get; set; }
 
         public string role { get; set; }
+        public string? role_jp { get; set; }
 
         public DateTime created_at { get; set; }
 
