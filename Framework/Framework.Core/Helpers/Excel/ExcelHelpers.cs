@@ -109,8 +109,8 @@ namespace Framework.Core.Helpers
                                         new SheetViews(new SheetView() { WorkbookViewId = 0, ShowGridLines = new BooleanValue(false) }),
                                         new SheetData()
                                         );
-            
-            workbookpart.WorksheetParts.First().Worksheet.Save();
+
+            //workbookpart.WorksheetParts.First().Worksheet.Save();
             Sheets sheets = workbookpart.Workbook.GetFirstChild<Sheets>();
             WorksheetPart worksheetPart = workbookpart.WorksheetParts.First();
             string relationshipId = workbookpart.GetIdOfPart(worksheetPart);
@@ -125,7 +125,7 @@ namespace Framework.Core.Helpers
             // Append the new worksheet and associate it with the workbook.
             Sheet sheet = new Sheet() { Id = relationshipId, SheetId = sheetId, Name = sheetName };
             sheets.Append(sheet);
-            workbookpart.Workbook.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -196,8 +196,8 @@ namespace Framework.Core.Helpers
 
             }
             // Save the new worksheet.
-            worksheetPart.Worksheet.Save();
-            workbookpart.Workbook.Save();
+            //worksheetPart.Worksheet.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -226,11 +226,11 @@ namespace Framework.Core.Helpers
             Columns columns = AutoSize(sheetData, cellConfigs);
             WorksheetPart worksheetPart = workbookpart.WorksheetParts.First();
             worksheetPart.Worksheet.InsertBefore(columns, sheetData);
-            worksheetPart.Worksheet.Save();
+            //worksheetPart.Worksheet.Save();
 
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
             //workbookpart.WorksheetParts.First().Worksheet.Elements<SheetData>().First().Equals(sheetData);
-            workbookpart.Workbook.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -259,11 +259,11 @@ namespace Framework.Core.Helpers
             Columns columns = AutoSize(sheetData, cellConfigs);
             WorksheetPart worksheetPart = workbookpart.WorksheetParts.First();
             worksheetPart.Worksheet.InsertBefore(columns, sheetData);
-            worksheetPart.Worksheet.Save();
+            //worksheetPart.Worksheet.Save();
 
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
             //workbookpart.WorksheetParts.First().Worksheet.Elements<SheetData>().First().Equals(sheetData);
-            workbookpart.Workbook.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -274,23 +274,23 @@ namespace Framework.Core.Helpers
             MergeCells mergeCells = workbookpart.WorksheetParts.First().Worksheet.GetFirstChild<MergeCells>();
 
             if (mergeCells == null)
-            { 
+            {
                 mergeCells = new MergeCells();
                 mergeCells.Append(new MergeCell() { Reference = new StringValue(cellReference) });
-                workbookpart.WorksheetParts.First().Worksheet.InsertAfter(mergeCells, sheetData); 
+                workbookpart.WorksheetParts.First().Worksheet.InsertAfter(mergeCells, sheetData);
             }
             else
             {
                 mergeCells.Append(new MergeCell() { Reference = new StringValue(cellReference) });
             }
 
-            workbookpart.WorksheetParts.First().Worksheet.Save();
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
-            workbookpart.Workbook.Save();
+            //workbookpart.WorksheetParts.First().Worksheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
-        public static WorkbookPart InsertCell(this WorkbookPart workbookpart, string cellReference, string value, DataType dataType, VCellStyle? cellStyle = VCellStyle.Normal)
+        public static WorkbookPart InsertCell(this WorkbookPart workbookpart, string cellReference, string value, DataType dataType, VCellStyle? cellStyle = VCellStyle.Normal, bool replaceStyle = false)
         {
             SheetData sheetData = workbookpart.WorksheetParts.First().Worksheet.GetFirstChild<SheetData>();
 
@@ -306,12 +306,40 @@ namespace Framework.Core.Helpers
             else
             {
                 row = new Row() { RowIndex = rowIndex };
-                sheetData.Append(row);
-            }
 
+                bool is_break = false;
+                foreach (Row r in rows)
+                {
+                    if (r.RowIndex > row.RowIndex)
+                    {
+                        sheetData.InsertBefore(row, r);
+                        is_break = true;
+                        break;
+                    }
+                }
+
+                if (is_break == false)
+                {
+                    sheetData.Append(row);
+                }
+            }
             // If there is not a cell with the specified column name, insert one.  
             if (row.Elements<Cell>().Where(c => c.CellReference.Value == cellReference).Count() > 0)
             {
+                Cell cell = GetCellByAddress(workbookpart, cellReference);
+                cell.CellValue = new CellValue(value);
+                if (double.TryParse(value, out _))
+                {
+                    cell.DataType = CellValues.Number;
+                }
+                else
+                {
+                    cell.DataType = CellValues.String;
+                }
+                if (replaceStyle)
+                {
+                    cell.StyleIndex = UInt32Value.FromUInt32((uint)cellStyle);
+                }
                 //return row.Elements<Cell>().Where(c => c.CellReference.Value == cellReference).First();
                 return workbookpart;
             }
@@ -321,7 +349,10 @@ namespace Framework.Core.Helpers
                 Cell refCell = null;
                 foreach (Cell cell in row.Elements<Cell>())
                 {
-                    if (string.Compare(cell.CellReference.Value, cellReference, true) > 0)
+
+                    var rowCellColIndex = (int)GetColumnIndex(new string(cell.CellReference.Value.Where(char.IsLetter).ToArray()));
+                    var addressNameColIndex = (int)GetColumnIndex(new string(cellReference.Where(char.IsLetter).ToArray()));
+                    if (rowCellColIndex > addressNameColIndex)
                     {
                         refCell = cell;
                         break;
@@ -330,13 +361,13 @@ namespace Framework.Core.Helpers
 
                 Cell newCell = CreateCell(value, dataType, false, false, cellStyle);
                 newCell.CellReference = cellReference;
-                row.AppendChild(newCell);
+                row.InsertBefore(newCell, refCell);
 
             }
 
-            workbookpart.WorksheetParts.First().Worksheet.Save();
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
-            workbookpart.Workbook.Save();
+            //workbookpart.WorksheetParts.First().Worksheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
 
         }
@@ -392,28 +423,94 @@ namespace Framework.Core.Helpers
             return true;
         }
 
-        public static bool SetBorder(this WorkbookPart workbookPart, string index, bool top = false, bool bottom = false, bool left = false, bool right = false, BorderStyleValues style = BorderStyleValues.Thin)
+        public static bool SetBorder(this WorkbookPart workbookPart, string cellAddress, Border border)
         {
-            var cell = GetCellByAddress(workbookPart, index);
-            if (cell == null)
-            {
-                return false;
-            }
             Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+            var cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+
+
             if (cell.StyleIndex == null)
             {
-                var border = GenerateBorder(true, true, false, false, BorderStyleValues.Dotted);
                 cell.StyleIndex = GennerateFormatCell(stylesheet, null, null, border);
             }
             else
             {
-                var cellFormat = stylesheet.CellFormats.Elements<CellFormat>().ElementAt(int.Parse(cell.StyleIndex));
-                int idx = cellFormat.BorderId > 0 ? int.Parse(cellFormat.BorderId) : 0;
-                var border = stylesheet.Borders.Elements<Border>().ElementAt(idx);
-                cell.StyleIndex = GennerateFormatCell(stylesheet, null, null, border, cellFormat);
+                cell.StyleIndex = CopyCellFormatWithNewBorder(stylesheet, cell.StyleIndex, border);
             }
+
             return true;
         }
+
+        public static WorkbookPart SetBorderAll(this WorkbookPart workbookPart, string cellRange, BorderStyleValues borderStyle = BorderStyleValues.Thin)
+        {
+            if (!Regex.IsMatch(cellRange, @"^[A-Za-z]+\d+:[A-Za-z]+\d+$"))
+            {
+                throw new ArgumentException("Invalid cell range format. Expected format: 'A1:B2'.");
+            }
+
+            string[] cells = cellRange.Split(':');
+            int startRow = (int)GetRowIndex(cells[0]).Value;
+            int endRow = (int)GetRowIndex(cells[1]).Value;
+            int startCol = (int)GetColumnIndex(cells[0]).Value;
+            int endCol = (int)GetColumnIndex(cells[1]).Value;
+
+            Border border = new Border(
+                new LeftBorder(new Color() { Auto = true }) { Style = borderStyle },
+                new RightBorder(new Color() { Auto = true }) { Style = borderStyle },
+                new TopBorder(new Color() { Auto = true }) { Style = borderStyle },
+                new BottomBorder(new Color() { Auto = true }) { Style = borderStyle },
+                new DiagonalBorder()
+            );
+
+            // To prevent creating redundant cellFormat
+            UInt32Value? prevCellStyleBefore = null;
+            UInt32Value? prevCellStyleAfter = null;
+
+            for (int row = startRow; row <= endRow; row++)
+            {
+                for (int col = startCol; col <= endCol; col++)
+                {
+                    string cellReference = GetExcelColumnName(col) + row;
+                    Cell cell = GetOrCreateCellByAddress(workbookPart, cellReference);
+                    if (prevCellStyleBefore != cell.StyleIndex || (row == startRow && col == startCol))
+                    {
+                        prevCellStyleBefore = cell.StyleIndex;
+
+                        SetBorder(workbookPart, cellReference, border);
+
+                        prevCellStyleAfter = cell.StyleIndex;
+                    }
+                    else
+                    {
+                        cell.StyleIndex = prevCellStyleAfter;
+                    }
+                }
+            }
+
+            return workbookPart;
+        }
+
+        // public static bool SetBorderWhite(this WorkbookPart workbookPart, string cellAddress)
+        // {
+        //     Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+        //     var cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+
+        //     var border = new Border()
+        //     {
+        //         TopBorder = new TopBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+        //         BottomBorder = new BottomBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+        //         LeftBorder = new LeftBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+        //         RightBorder = new RightBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+        //     };
+
+        //     cell.StyleIndex = CopyCellFormatWithNewBorder(stylesheet, cell.StyleIndex, border);
+
+        //     return true;
+        // }
+
+
 
         public static bool SetBorder(this WorkbookPart workbookPart, string sheetName, string cellReference, bool top = false, bool bottom = false, bool left = false, bool right = false, BorderStyleValues style = BorderStyleValues.Thin)
         {
@@ -422,7 +519,7 @@ namespace Framework.Core.Helpers
             //var cell = GetCellByAddress(workbookPart, sheetName, cellReference);
             //if (cell == null)
             //{
-                
+
             //    cell = GetCellByAddress(workbookPart, sheetName, cellReference);
             //}
             //Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
@@ -440,6 +537,220 @@ namespace Framework.Core.Helpers
             //}
             return true;
         }
+
+        public static bool SetRangeBorder(this WorkbookPart workbookPart, string range, Border border)
+        {
+            var worksheetPart = workbookPart.WorksheetParts.First();
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+            var rangeCellsAddress = range.Split(':');
+            var startCellAddress = rangeCellsAddress[0];
+            var endCellAddress = rangeCellsAddress[1];
+
+            var startCell = new
+            {
+                RowIndex = Int32.Parse(new string(startCellAddress.Where(char.IsDigit).ToArray())),
+                ColumnIndex = (int)GetColumnIndex(new string(startCellAddress.Where(char.IsLetter).ToArray()))
+            };
+
+            var endCell = new
+            {
+                RowIndex = Int32.Parse(new string(endCellAddress.Where(char.IsDigit).ToArray())),
+                ColumnIndex = (int)GetColumnIndex(new string(endCellAddress.Where(char.IsLetter).ToArray()))
+            };
+
+            // To prevent creating redundant cellFormat
+            UInt32Value? prevCellStyleBefore = null;
+            UInt32Value? prevCellStyleAfter = null;
+
+            // top left
+            string cellAddress = GetCellReference(startCell.ColumnIndex, startCell.RowIndex);
+            SetBorder(workbookPart, cellAddress, new Border()
+            {
+                TopBorder = (TopBorder)border?.TopBorder?.Clone(),
+                LeftBorder = (LeftBorder)border?.LeftBorder?.Clone(),
+            });
+
+            // top
+            for (int top = startCell.ColumnIndex + 1; top < endCell.ColumnIndex; top++)
+            {
+                cellAddress = GetCellReference(top, startCell.RowIndex);
+                Cell cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+                if (prevCellStyleBefore != cell.StyleIndex || (top == startCell.ColumnIndex + 1))
+                {
+                    prevCellStyleBefore = cell.StyleIndex;
+
+                    SetBorder(workbookPart, cellAddress, new Border()
+                    {
+                        TopBorder = (TopBorder)border?.TopBorder?.Clone(),
+                    });
+
+                    prevCellStyleAfter = cell.StyleIndex;
+                }
+                else
+                {
+                    cell.StyleIndex = prevCellStyleAfter;
+                }
+            }
+
+            // top right
+            cellAddress = GetCellReference(endCell.ColumnIndex, startCell.RowIndex);
+            SetBorder(workbookPart, cellAddress, new Border()
+            {
+                TopBorder = (TopBorder)border?.TopBorder?.Clone(),
+                RightBorder = (RightBorder)border?.RightBorder?.Clone(),
+            });
+
+            // left
+            for (int left = startCell.RowIndex + 1; left < endCell.RowIndex; left++)
+            {
+                cellAddress = GetCellReference(startCell.ColumnIndex, left);
+                Cell cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+                if (prevCellStyleBefore != cell.StyleIndex || (left == startCell.RowIndex + 1))
+                {
+                    prevCellStyleBefore = cell.StyleIndex;
+
+                    SetBorder(workbookPart, cellAddress, new Border()
+                    {
+                        LeftBorder = (LeftBorder)border?.LeftBorder?.Clone(),
+                    });
+
+                    prevCellStyleAfter = cell.StyleIndex;
+                }
+                else
+                {
+                    cell.StyleIndex = prevCellStyleAfter;
+                }
+            }
+
+            // right
+            for (int right = startCell.RowIndex + 1; right < endCell.RowIndex; right++)
+            {
+                cellAddress = GetCellReference(endCell.ColumnIndex, right);
+                Cell cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+                if (prevCellStyleBefore != cell.StyleIndex || (right == startCell.RowIndex + 1))
+                {
+                    prevCellStyleBefore = cell.StyleIndex;
+
+                    SetBorder(workbookPart, cellAddress, new Border()
+                    {
+                        RightBorder = (RightBorder)border?.RightBorder?.Clone(),
+                    });
+
+                    prevCellStyleAfter = cell.StyleIndex;
+                }
+                else
+                {
+                    cell.StyleIndex = prevCellStyleAfter;
+                }
+            }
+
+            // bottom left
+            cellAddress = GetCellReference(startCell.ColumnIndex, endCell.RowIndex);
+            SetBorder(workbookPart, cellAddress, new Border()
+            {
+                BottomBorder = (BottomBorder)border?.BottomBorder?.Clone(),
+                LeftBorder = (LeftBorder)border?.LeftBorder?.Clone(),
+            });
+
+            // bottom
+            for (int bottom = startCell.ColumnIndex + 1; bottom < endCell.ColumnIndex; bottom++)
+            {
+                cellAddress = GetCellReference(bottom, endCell.RowIndex);
+                Cell cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+                if (prevCellStyleBefore != cell.StyleIndex || (bottom == startCell.ColumnIndex + 1))
+                {
+                    prevCellStyleBefore = cell.StyleIndex;
+
+                    SetBorder(workbookPart, cellAddress, new Border()
+                    {
+                        BottomBorder = (BottomBorder)border?.BottomBorder?.Clone(),
+                    });
+
+                    prevCellStyleAfter = cell.StyleIndex;
+                }
+                else
+                {
+                    cell.StyleIndex = prevCellStyleAfter;
+                }
+            }
+
+            // bottom right
+            cellAddress = GetCellReference(endCell.ColumnIndex, endCell.RowIndex);
+            SetBorder(workbookPart, cellAddress, new Border()
+            {
+                BottomBorder = (BottomBorder)border?.BottomBorder?.Clone(),
+                RightBorder = (RightBorder)border?.RightBorder?.Clone(),
+            });
+
+
+            return true;
+        }
+
+
+        public static bool SetBorderWhiteAllCellInRange(this WorkbookPart workbookPart, string range)
+        {
+            var worksheetPart = workbookPart.WorksheetParts.First();
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+            var rangeCellsAddress = range.Split(':');
+            var startCellAddress = rangeCellsAddress[0];
+            var endCellAddress = rangeCellsAddress[1];
+
+            var startCell = new
+            {
+                RowIndex = Int32.Parse(new string(startCellAddress.Where(char.IsDigit).ToArray())),
+                ColumnIndex = (int)GetColumnIndex(new string(startCellAddress.Where(char.IsLetter).ToArray()))
+            };
+
+            var endCell = new
+            {
+                RowIndex = Int32.Parse(new string(endCellAddress.Where(char.IsDigit).ToArray())),
+                ColumnIndex = (int)GetColumnIndex(new string(endCellAddress.Where(char.IsLetter).ToArray()))
+            };
+
+
+            var border = new Border()
+            {
+                TopBorder = new TopBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+                BottomBorder = new BottomBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("000000") } },
+                LeftBorder = new LeftBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+                RightBorder = new RightBorder() { Style = BorderStyleValues.Thin, Color = new Color() { Rgb = HexBinaryValue.FromString("ffffff") } },
+            };
+            border = stylesheet.Borders.AppendChild(border);
+            var borderCount = (uint)stylesheet.Borders.ChildElements.Count();
+            var borderId = borderCount > 0 && border != null ? borderCount - 1 : 0;
+
+            CellFormat cellFormat = new CellFormat();
+            cellFormat.BorderId = borderId;
+
+            stylesheet.CellFormats.Append(cellFormat);
+            var cellFormatId = (uint)stylesheet.CellFormats.ChildElements.Count() - 1;
+
+            for (int row = startCell.RowIndex; row <= endCell.RowIndex; row++)
+            {
+                for (int col = startCell.ColumnIndex; col <= endCell.ColumnIndex; col++)
+                {
+                    string cellAddress = GetCellReference(col, row);
+                    var cell = GetOrCreateCellByAddress(workbookPart, cellAddress);
+
+                    if (cell?.StyleIndex?.Value == null)
+                    {
+                        cell.StyleIndex = cellFormatId;
+                    }
+                    else
+                    {
+                        cell.StyleIndex = CopyCellFormatWithNewBorder(stylesheet, cell.StyleIndex, border);
+                    }
+                }
+            }
+
+
+            return true;
+        }
+
 
         public static WorkbookPart FillGridData<T>(this WorkbookPart workbookpart, List<T> data, List<ExcelItem> cellConfigs, bool showHeader = true)
         {
@@ -468,11 +779,11 @@ namespace Framework.Core.Helpers
             Columns columns = AutoSize(sheetData, cellConfigs);
             WorksheetPart worksheetPart = workbookpart.WorksheetParts.First();
             worksheetPart.Worksheet.InsertBefore(columns, sheetData);
-            worksheetPart.Worksheet.Save();
+            //worksheetPart.Worksheet.Save();
 
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
             //workbookpart.WorksheetParts.First().Worksheet.Elements<SheetData>().First().Equals(sheetData);
-            workbookpart.Workbook.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -541,15 +852,15 @@ namespace Framework.Core.Helpers
 
                 Cell newCell = CreateCell(value, dataType, false, false, cellStyle);
                 newCell.CellReference = cellReference;
-                if(refCell != null)
+                if (refCell != null)
                     row.InsertBefore(newCell, refCell);
                 else
                     row.AppendChild(newCell);
             }
 
-            workbookpart.WorksheetParts.First().Worksheet.Save();
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
-            workbookpart.Workbook.Save();
+            //workbookpart.WorksheetParts.First().Worksheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
 
         }
@@ -591,9 +902,9 @@ namespace Framework.Core.Helpers
             }
 
 
-            workbookpart.WorksheetParts.First().Worksheet.Save();
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
-            workbookpart.Workbook.Save();
+            //workbookpart.WorksheetParts.First().Worksheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -638,11 +949,11 @@ namespace Framework.Core.Helpers
             Columns columns = AutoSize(sheetData, cellConfigs);
             WorksheetPart worksheetPart = workbookpart.WorksheetParts.First();
             sheetData.InsertBeforeSelf(columns);
-            worksheetPart.Worksheet.Save();
+            //worksheetPart.Worksheet.Save();
 
-            workbookpart.WorkbookStylesPart.Stylesheet.Save();
+            //workbookpart.WorkbookStylesPart.Stylesheet.Save();
             //workbookpart.WorksheetParts.First().Worksheet.Elements<SheetData>().First().Equals(sheetData);
-            workbookpart.Workbook.Save();
+            //workbookpart.Workbook.Save();
             return workbookpart;
         }
 
@@ -682,6 +993,206 @@ namespace Framework.Core.Helpers
             return workbookPart;
         }
 
+        public static WorkbookPart SetColumnWidth(this WorkbookPart workbookPart, string columnName, double columnWidth, string name_sheet = null)
+        {
+            WorksheetPart worksheetPart;
+            if (name_sheet != null)
+            {
+                var sheet = workbookPart.Workbook.Descendants<Sheet>().FirstOrDefault(s => s.Name == name_sheet);
+                if (sheet == null)
+                {
+                    // Sheet with the specified name does not exist
+                    throw new ArgumentException($"Sheet with name '{name_sheet}' does not exist.");
+                }
+
+                worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
+            }
+            else
+            {
+                worksheetPart = workbookPart.WorksheetParts.First();
+            }
+
+            uint? columnIndex = GetColumnIndex(columnName);
+
+            // Retrieve the Columns collection of the worksheet, or create it if it doesn't exist
+            Columns? columns = worksheetPart.Worksheet.GetFirstChild<Columns>();
+            if (columns == null)
+            {
+                SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+                columns = new Columns();
+                worksheetPart.Worksheet.InsertBefore(columns, sheetData);
+            }
+
+            // Find the column element for the specified column index or create a new one if it doesn't exist
+            Column? column = columns?.Elements<Column>().FirstOrDefault(c => c.Min == columnIndex && c.Max == columnIndex);
+            if (column == null)
+            {
+                column = new Column() { Min = columnIndex, Max = columnIndex, Width = columnWidth, CustomWidth = true };
+                columns.Append(column);
+            }
+            else
+            {
+                column.Width = columnWidth;
+                column.CustomWidth = true;
+            }
+
+            return workbookPart;
+        }
+
+        public static WorkbookPart SetColumnWidthRange(this WorkbookPart workbookPart, string columnRange, double columnWidth, string? sheetName = null)
+        {
+            if (!Regex.IsMatch(columnRange, @"^[A-Za-z]+:[A-Za-z]+$"))
+            {
+                throw new ArgumentException("Invalid column range format. Expected format: 'A:D'.");
+            }
+
+            string[] columns = columnRange.Split(':');
+            uint startColumn = GetColumnIndex(columns[0]).Value;
+            uint endColumn = GetColumnIndex(columns[1]).Value;
+
+            for (uint columnIndex = startColumn; columnIndex <= endColumn; columnIndex++)
+            {
+                string columnName = GetExcelColumnName((int)columnIndex);
+                workbookPart.SetColumnWidth(columnName, columnWidth, sheetName);
+            }
+
+            return workbookPart;
+        }
+
+        public static WorkbookPart SetFont(this WorkbookPart workbookPart, string cellReference, string? newFontName = null, int? newFontSize = null)
+        {
+            // Get the cell to modify
+            Cell cell = GetCellByAddress(workbookPart, cellReference);
+
+            if (cell == null || (newFontName == null && newFontSize == null))
+            {
+                // Cell not found or nothing change, return the workbookPart as-is
+                return workbookPart;
+            }
+
+            uint styleIndex = cell.StyleIndex != null ? cell.StyleIndex.Value : 0;
+
+            Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+            // Retrieve the cell format and font associated with the style index
+            CellFormat cellFormat = (CellFormat)stylesheet.CellFormats.ElementAt((int)styleIndex);
+            Font font = (Font)stylesheet.Fonts.ElementAt((int)cellFormat.FontId.Value);
+
+            // Clone the existing font
+            Font newFont = (Font)font.CloneNode(true);
+            if (newFontName != null) newFont.FontName.Val = newFontName;
+            if (newFontSize != null) newFont.FontSize.Val = newFontSize;
+
+            // Add the new font to the stylesheet
+            stylesheet.Fonts.Append(newFont);
+            uint newFontId = (uint)stylesheet.Fonts.Count() - 1;
+
+            // Clone the cell format and update the font ID
+            CellFormat newCellFormat = (CellFormat)cellFormat.CloneNode(true);
+            newCellFormat.FontId = newFontId;
+
+            // Add the new cell format to the stylesheet
+            stylesheet.CellFormats.Append(newCellFormat);
+            uint newCellFormatId = (uint)stylesheet.CellFormats.Count() - 1;
+
+            cell.StyleIndex = newCellFormatId;
+
+            //stylesheet.Save();
+            //workbookPart.WorksheetParts.First().Worksheet.Save();
+
+            return workbookPart;
+        }
+
+        public static WorkbookPart SetFontRange(this WorkbookPart workbookPart, string cellRange, string? newFontName = null, int? newFontSize = null)
+        {
+            if (!Regex.IsMatch(cellRange, @"^[A-Za-z]+\d+:[A-Za-z]+\d+$"))
+            {
+                throw new ArgumentException("Invalid cell range format. Expected format: 'A1:B2'.");
+            }
+
+            string[] cells = cellRange.Split(':');
+            int startRow = (int)GetRowIndex(cells[0]).Value;
+            int endRow = (int)GetRowIndex(cells[1]).Value;
+            int startCol = (int)GetColumnIndex(cells[0]).Value;
+            int endCol = (int)GetColumnIndex(cells[1]).Value;
+
+            for (int row = startRow; row <= endRow; row++)
+            {
+                for (int col = startCol; col <= endCol; col++)
+                {
+                    string cellReference = GetExcelColumnName(col) + row;
+                    workbookPart.SetFont(cellReference, newFontName, newFontSize);
+                }
+            }
+
+            return workbookPart;
+        }
+
+        public static WorkbookPart SetCellAlignment(this WorkbookPart workbookPart, string cellReference, HorizontalAlignmentValues horizontalAlignment, VerticalAlignmentValues verticalAlignment, uint textRotation = 0)
+        {
+            // Get the cell to modify
+            Cell cell = GetCellByAddress(workbookPart, cellReference);
+
+            if (cell == null)
+            {
+                // Cell not found, return the workbookPart as-is
+                return workbookPart;
+            }
+
+            uint styleIndex = cell.StyleIndex != null ? cell.StyleIndex.Value : 0;
+
+            Stylesheet stylesheet = workbookPart.WorkbookStylesPart.Stylesheet;
+
+            CellFormat cellFormat = (CellFormat)stylesheet.CellFormats.ElementAt((int)styleIndex);
+
+            // Clone the cell format and update the new cell format
+            CellFormat newCellFormat = (CellFormat)cellFormat.CloneNode(true);
+            if (newCellFormat.Alignment == null)
+            {
+                newCellFormat.Alignment = new Alignment();
+            }
+
+            newCellFormat.Alignment.Horizontal = horizontalAlignment;
+            newCellFormat.Alignment.Vertical = verticalAlignment;
+            newCellFormat.Alignment.TextRotation = (UInt32Value)textRotation;
+
+            // Add the new cell format to the stylesheet
+            stylesheet.CellFormats.Append(newCellFormat);
+            uint newCellFormatId = (uint)stylesheet.CellFormats.Count() - 1;
+
+            cell.StyleIndex = newCellFormatId;
+
+            //stylesheet.Save();
+            //workbookPart.WorksheetParts.First().Worksheet.Save();
+
+            return workbookPart;
+        }
+
+        public static WorkbookPart SetCellAlignmentRange(this WorkbookPart workbookPart, string cellRange, HorizontalAlignmentValues horizontalAlignment, VerticalAlignmentValues verticalAlignment, uint textRotation = 0)
+        {
+            if (!Regex.IsMatch(cellRange, @"^[A-Za-z]+\d+:[A-Za-z]+\d+$"))
+            {
+                throw new ArgumentException("Invalid cell range format. Expected format: 'A1:B2'.");
+            }
+
+            string[] cells = cellRange.Split(':');
+            int startRow = (int)GetRowIndex(cells[0]).Value;
+            int endRow = (int)GetRowIndex(cells[1]).Value;
+            int startCol = (int)GetColumnIndex(cells[0]).Value;
+            int endCol = (int)GetColumnIndex(cells[1]).Value;
+
+            for (int row = startRow; row <= endRow; row++)
+            {
+                for (int col = startCol; col <= endCol; col++)
+                {
+                    string cellReference = GetExcelColumnName(col) + row;
+                    workbookPart.SetCellAlignment(cellReference, horizontalAlignment, verticalAlignment, textRotation);
+                }
+            }
+
+            return workbookPart;
+        }
+
         public static string GenerateColumnLetter(int n, int startIndex = 65)
         {
             string name = "";
@@ -697,7 +1208,93 @@ namespace Framework.Core.Helpers
             return name;
         }
 
+        public static WorkbookPart CopyCellStyle(this WorkbookPart workbookPart, string from, string to)
+        {
+            Cell fromCell = GetCellByAddress(workbookPart, from);
+            Cell toCell = GetCellByAddress(workbookPart, to);
+            if (fromCell != null && toCell != null)
+                toCell.StyleIndex = fromCell.StyleIndex;
+            return workbookPart;
+        }
+
+        public static WorkbookPart CopyCellStyleRange(this WorkbookPart workbookPart, string fromRange, string to)
+        {
+            if (!Regex.IsMatch(fromRange, @"^[A-Za-z]+\d+:[A-Za-z]+\d+$"))
+            {
+                throw new ArgumentException("Invalid cell range format. Expected format: 'A1:B2'.");
+            }
+
+            string[] cells = fromRange.Split(':');
+            int startRow = (int)GetRowIndex(cells[0]).Value;
+            int endRow = (int)GetRowIndex(cells[1]).Value;
+            int startCol = (int)GetColumnIndex(cells[0]).Value;
+            int endCol = (int)GetColumnIndex(cells[1]).Value;
+
+            int toRow = (int)GetRowIndex(to).Value;
+            int toCol = (int)GetColumnIndex(to).Value;
+
+            int colOffset = startCol - toCol;
+            int rowOffset = startRow - toRow;
+
+            for (int row = startRow; row <= endRow; row++)
+            {
+                for (int col = startCol; col <= endCol; col++)
+                {
+                    string fromCell = GetExcelColumnName(col) + row;
+                    string toCell = GetExcelColumnName(col - colOffset) + (row - rowOffset);
+                    workbookPart.CopyCellStyle(fromCell, toCell);
+                }
+            }
+            return workbookPart;
+        }
+
+
         #region Private method
+
+
+        private static uint CopyCellFormatWithNewBorder(Stylesheet stylesheet, uint originalStyleIndex, Border border)
+        {
+            // Retrieve the original cell format
+            var originalCellFormat = stylesheet.CellFormats.Elements<CellFormat>().ElementAt((int)originalStyleIndex);
+
+            // Create a new CellFormat object by copying properties from the original
+            CellFormat newCellFormat = (CellFormat)originalCellFormat.CloneNode(true);
+
+            newCellFormat.BorderId = CopyBorderWithNewBorder(stylesheet, originalCellFormat.BorderId, border);
+
+            stylesheet.CellFormats.Append(newCellFormat);
+            return (uint)stylesheet.CellFormats.Count() - 1;
+        }
+        private static uint CopyBorderWithNewBorder(Stylesheet stylesheet, uint originalBorderIndex, Border border)
+        {
+            // Retrieve the original cell format
+            var originalBorder = stylesheet.Borders.Elements<Border>().ElementAt((int)originalBorderIndex);
+
+            // Create a new Border object by copying properties from the original
+            var newBorder = new Border()
+            {
+                TopBorder =
+                    (TopBorder?)border?.TopBorder?.Clone() ??
+                    (TopBorder?)originalBorder?.TopBorder?.Clone() ??
+                    new TopBorder() { Style = originalBorder?.TopBorder?.Style ?? BorderStyleValues.None },
+                BottomBorder =
+                    (BottomBorder?)border?.BottomBorder?.Clone() ??
+                    (BottomBorder?)originalBorder?.BottomBorder?.Clone() ??
+                    new BottomBorder() { Style = originalBorder?.BottomBorder?.Style ?? BorderStyleValues.None },
+                LeftBorder =
+                    (LeftBorder?)border?.LeftBorder?.Clone() ??
+                    (LeftBorder?)originalBorder?.LeftBorder?.Clone() ??
+                    new LeftBorder() { Style = originalBorder?.LeftBorder?.Style ?? BorderStyleValues.None },
+                RightBorder =
+                    (RightBorder?)border?.RightBorder?.Clone() ??
+                    (RightBorder?)originalBorder?.RightBorder?.Clone() ??
+                    new RightBorder() { Style = originalBorder?.RightBorder?.Style ?? BorderStyleValues.None },
+            };
+
+            stylesheet.Borders.Append(newBorder);
+            return (uint)stylesheet.Borders.Count() - 1;
+        }
+
         private static uint? GetColumnIndex(string cellReference)
         {
             if (string.IsNullOrEmpty(cellReference))
@@ -777,6 +1374,71 @@ namespace Framework.Core.Helpers
             return cell;
         }
 
+        private static Cell GetOrCreateCellByAddress(this WorkbookPart workbookPart, string addressName)
+        {
+            var worksheetPart = workbookPart.WorksheetParts.First();
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+
+            // Get the row and column indices from the address
+            var rowIndex = UInt32.Parse(new string(addressName.Where(char.IsDigit).ToArray()));
+            var columnIndex = (int)GetColumnIndex(new string(addressName.Where(char.IsLetter).ToArray()));
+
+            Row? row = null;
+            // weird error: FirstOrDefault throw error when result is null
+            try
+            {
+                row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex == rowIndex);
+            }
+            catch (Exception e)
+            { }
+
+
+            if (row == null)
+            {
+                row = new Row() { RowIndex = rowIndex };
+                bool is_break = false;
+                foreach (Row r in sheetData.Elements<Row>())
+                {
+                    if (r.RowIndex > row.RowIndex)
+                    {
+                        sheetData.InsertBefore(row, r);
+                        is_break = true;
+                        break;
+                    }
+                }
+
+                if (is_break == false)
+                {
+                    sheetData.Append(row);
+                }
+            }
+
+
+
+            // Get the cell in the row with the specified address
+            Cell cell = row.Elements<Cell>().FirstOrDefault(c => c.CellReference.Value == addressName);
+            if (cell == null)
+            {
+                // Cells must be in sequential order within the row.
+                // Find the proper insertion point for the new cell.
+                Cell refCell = null;
+                foreach (Cell rowCell in row.Elements<Cell>())
+                {
+                    var rowCellColIndex = (int)GetColumnIndex(new string(rowCell.CellReference.Value.Where(char.IsLetter).ToArray()));
+                    var addressNameColIndex = (int)GetColumnIndex(new string(addressName.Where(char.IsLetter).ToArray()));
+                    if (rowCellColIndex > addressNameColIndex)
+                    {
+                        refCell = rowCell;
+                        break;
+                    }
+                }
+
+                cell = new Cell() { CellReference = addressName };
+                row.InsertBefore(cell, refCell);
+            }
+
+            return cell;
+        }
         private static Font GenerateFont(bool is_bold, int? fontsize = 12, string? color = "#000")
         {
             Font font = new Font();
@@ -833,23 +1495,22 @@ namespace Framework.Core.Helpers
                 CellFormat cellFormat = new CellFormat();
                 if (font != null)
                 {
-                    stylesheet.Fonts.AppendChild(font);
+                    stylesheet.Fonts.AppendChild(font.CloneNode(true));
+                    var fontCount = (uint)stylesheet.Fonts.ChildElements.Count();
+                    cellFormat.FontId = fontCount > 0 && font != null ? fontCount - 1 : 0;
                 }
                 if (fill != null)
                 {
-                    stylesheet.Fills.AppendChild(fill);
-
+                    stylesheet.Fills.AppendChild(fill.CloneNode(true));
+                    var fillCount = (uint)stylesheet.Fills.ChildElements.Count();
+                    cellFormat.FillId = fillCount > 0 && fill != null ? fillCount - 1 : 0;
                 }
                 if (border != null)
                 {
-                    stylesheet.Borders.AppendChild(border);
+                    stylesheet.Borders.AppendChild(border.CloneNode(true));
+                    var borderCount = (uint)stylesheet.Borders.ChildElements.Count();
+                    cellFormat.BorderId = borderCount > 0 && border != null ? borderCount - 1 : 0;
                 }
-                var fontCount = (uint)stylesheet.Fonts.ChildElements.Count();
-                var fillCount = (uint)stylesheet.Fills.ChildElements.Count();
-                var borderCount = (uint)stylesheet.Borders.ChildElements.Count();
-                cellFormat.FontId = fontCount > 0 && font != null ? fontCount - 1 : 0;
-                cellFormat.FillId = fillCount > 0 && fill != null ? fillCount - 1 : 0;
-                cellFormat.BorderId = borderCount > 0 && border != null ? borderCount - 1 : 0;
                 stylesheet.CellFormats.Append(cellFormat);
             }
             else
@@ -873,7 +1534,7 @@ namespace Framework.Core.Helpers
                     assign.BorderId = borderCount > 0 ? borderCount : 0;
                 }
             }
-            stylesheet.Save();
+            //stylesheet.Save();
             return (uint)stylesheet.CellFormats.ChildElements.Count() - 1;
         }
 
@@ -899,7 +1560,7 @@ namespace Framework.Core.Helpers
 
             // The text does not exist in the part. Create the SharedStringItem and return its index.
             shareStringPart.SharedStringTable.AppendChild(new SharedStringItem(new DocumentFormat.OpenXml.Spreadsheet.Text(text)));
-            shareStringPart.SharedStringTable.Save();
+            //shareStringPart.SharedStringTable.Save();
 
             return i;
         }
@@ -947,7 +1608,7 @@ namespace Framework.Core.Helpers
                 Cell newCell = new Cell() { CellReference = cellReference };
                 row.InsertBefore(newCell, refCell);
 
-                worksheet.Save();
+                //worksheet.Save();
                 return newCell;
             }
         }
@@ -1082,12 +1743,14 @@ namespace Framework.Core.Helpers
 
             //var fontFamily = "ＭＳ 明朝";
             var fontFamily = "ＭＳ Ｐゴシック";
+            var cvFontFamily = "MS Gothic";
+
             Fonts fts = new Fonts(
                 // Cell normal
                 new Font(
                     new FontSize() { Val = 11 },
                     new Color() { Rgb = new HexBinaryValue() { Value = "000000" } },
-                    new FontName() { Val = fontFamily }),
+                    new FontName() { Val = cvFontFamily }),
                 // Table header
                 new Font(
                     new Bold(),
@@ -1099,7 +1762,19 @@ namespace Framework.Core.Helpers
                     new Bold(),
                     new FontSize() { Val = 14 },
                     new Color() { Rgb = new HexBinaryValue() { Value = "000000" } },
-                    new FontName() { Val = fontFamily })
+                    new FontName() { Val = fontFamily }),
+                 // Default font for CV
+                 new Font(
+                     new FontSize() { Val = 11 },
+                     new Color() { Rgb = new HexBinaryValue() { Value = "000000" } },
+                     new FontName() { Val = cvFontFamily }
+                 ),
+                 // Default font for CV small
+                 new Font(
+                     new FontSize() { Val = 9 },
+                     new Color() { Rgb = new HexBinaryValue() { Value = "000000" } },
+                     new FontName() { Val = cvFontFamily }
+                 )
             );
             ss.Append(fts);
 
@@ -1123,6 +1798,13 @@ namespace Framework.Core.Helpers
                     new RightBorder(new Color() { Auto = true }) { Style = BorderStyleValues.Thin },
                     new TopBorder(new Color() { Auto = true }) { Style = BorderStyleValues.Thin },
                     new BottomBorder(new Color() { Auto = true }) { Style = BorderStyleValues.Thin },
+                    new DiagonalBorder()),
+                // No border
+                new Border(
+                    new LeftBorder() { Style = BorderStyleValues.None }, // No left border
+                    new RightBorder() { Style = BorderStyleValues.None }, // No right border
+                    new TopBorder() { Style = BorderStyleValues.None }, // No top border
+                    new BottomBorder() { Style = BorderStyleValues.None }, // No bottom border
                     new DiagonalBorder())
             );
 
@@ -1178,8 +1860,79 @@ namespace Framework.Core.Helpers
                 new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Left }) { FontId = 0, FillId = 0, BorderId = 2, Alignment = GenerateAlignment(HorizontalAlignmentValues.Left, true), ApplyFont = true, ApplyBorder = true, ApplyAlignment = true }, // template title Alignment Right
                 new CellFormat(new Alignment() { WrapText = false, Horizontal = HorizontalAlignmentValues.Right }) { FontId = 0, FillId = 0, BorderId = 0, Alignment = GenerateAlignment(HorizontalAlignmentValues.Right), ApplyFont = true, ApplyBorder = true, ApplyAlignment = true }, // template title Alignment Right
                 new CellFormat(new Alignment() { WrapText = false, Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center }) { FontId = 0, FillId = 0, BorderId = 2, Alignment = GenerateAlignment(HorizontalAlignmentValues.Center), ApplyFont = true, ApplyBorder = true, ApplyAlignment = true }, // Border Alignment center
-                new CellFormat(new Alignment() { WrapText = false, Horizontal = HorizontalAlignmentValues.Left }) { FontId = 2, FillId = 0, BorderId = 0, Alignment = GenerateAlignment(HorizontalAlignmentValues.Left), ApplyFont = true, ApplyBorder = true, ApplyAlignment = true } // template title
-
+                new CellFormat(new Alignment() { WrapText = false, Horizontal = HorizontalAlignmentValues.Left }) { FontId = 2, FillId = 0, BorderId = 0, Alignment = GenerateAlignment(HorizontalAlignmentValues.Left), ApplyFont = true, ApplyBorder = true, ApplyAlignment = true }, // template title
+                                                                                                                                                                                                                                                                                        // Default CV
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = false })
+                {
+                    FontId = 3,
+                    FillId = 0,
+                    BorderId = 3,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV wrap
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = true })
+                {
+                    FontId = 3,
+                    FillId = 0,
+                    BorderId = 3,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV border
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = false })
+                {
+                    FontId = 3,
+                    FillId = 0,
+                    BorderId = 2,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV wrap border
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = true })
+                {
+                    FontId = 3,
+                    FillId = 0,
+                    BorderId = 2,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV small
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = false })
+                {
+                    FontId = 4,
+                    FillId = 0,
+                    BorderId = 3,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV wrap small 
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = true })
+                {
+                    FontId = 4,
+                    FillId = 0,
+                    BorderId = 3,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV border small
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = false })
+                {
+                    FontId = 4,
+                    FillId = 0,
+                    BorderId = 2,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                },
+                // Default CV wrap border small
+                new CellFormat(new Alignment() { Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center, WrapText = true })
+                {
+                    FontId = 4,
+                    FillId = 0,
+                    BorderId = 2,
+                    ApplyAlignment = true,
+                    ApplyFont = true
+                }
             //new CellFormat() { FontId = 0, FillId = 0, BorderId = 2, NumberFormatId = 172, ApplyNumberFormat = true, ApplyFont = true, ApplyFill = true, ApplyBorder = true }, // table date time cell
             //new CellFormat() { FontId = 0, FillId = 0, BorderId = 2, NumberFormatId = 173, ApplyNumberFormat = true, ApplyFont = true, ApplyFill = true, ApplyBorder = true }, // table time cell
             //new CellFormat() { FontId = 0, FillId = 0, BorderId = 2, NumberFormatId = 174, ApplyNumberFormat = true, ApplyFont = true, ApplyFill = true, ApplyBorder = true }, // table number cell

@@ -39,6 +39,14 @@
         AlignLeft = 8,
         AlignRight = 9,
         BorderAlignCenter = 10,
-        PageTitleLeft = 11
+        PageTitleLeft = 11,
+        CVDefault = 12,
+        CVDefaultWrap = 13,
+        CVDefaultBorder = 14,
+        CVDefaultBorderWrap = 15,
+        CVDefaultSmall = 16,
+        CVDefaultWrapSmall = 17,
+        CVDefaultBorderSmall = 18,
+        CVDefaultBorderWrapSmall = 19
     }
 }
