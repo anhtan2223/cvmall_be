@@ -26,8 +26,10 @@ namespace Domain.Entities
         public DateTime birthday { get; set; }
 
         public string? last_university_name { get; set; }
+        public string? last_university_name_jp { get; set; }
 
         public string? subject { get; set; }
+        public string? subject_jp { get; set; }
 
         public int? graduation_year { get; set; }
 
@@ -48,14 +50,17 @@ namespace Domain.Entities
         public int? lang2_writing { get; set; }
 
         public string? certificate1_name { get; set; }
+        public string? certificate1_name_jp { get; set; }
 
         public int? certificate1_year { get; set; }
 
         public string? certificate2_name { get; set; }
+        public string? certificate2_name_jp { get; set; }
 
         public int? certificate2_year { get; set; }
 
         public string? certificate3_name { get; set; }
+        public string? certificate3_name_jp { get; set; }
 
         public int? certificate3_year { get; set; }
 
@@ -64,8 +69,10 @@ namespace Domain.Entities
         public int? certificate4_year { get; set; }
 
         public string? work_process { get; set; }
+        public string? work_process_jp { get; set; }
 
         public string? note { get; set; }
+        public string? note_jp { get; set; }
 
         public virtual ICollection<CvTechnicalInfo>? cvTechInfos { get; set; }
         

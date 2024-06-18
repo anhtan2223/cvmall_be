@@ -12,3 +12,4 @@
 /.vs
 /Application/Application.Core/obj
 /Application/Application.Core/bin
+/.DS_Store
