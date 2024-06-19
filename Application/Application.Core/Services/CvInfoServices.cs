@@ -27,7 +27,8 @@ namespace Application.Core.Services.Core
 
         public async Task<PagedList<CvInfoResponse>> GetPaged(RequestPaged request)
         {
-            string[] sortParts = request.sort.Split('.');
+            string sortRequest = request.sort ?? "user_code.asc";
+            string[] sortParts = sortRequest.Split('.');
             var queryField = sortParts[0];
             var order = sortParts[1];
 
@@ -66,7 +67,7 @@ namespace Application.Core.Services.Core
                         .GetQuery()
                         .ExcludeSoftDeleted()
                         .Where(x => string.IsNullOrEmpty(request.search) || x.name.ToLower().Contains(request.search.ToLower()))
-                        .SortBy(request.sort ?? "user_code.asc")
+                        .SortBy(sortRequest)
                         .Include(x => x.cvTechInfos)
                         .Include(y => y.bizInfos)
                         .ToPagedListAsync(request.page, request.size);
@@ -235,26 +236,20 @@ namespace Application.Core.Services.Core
 
         public async Task<byte[]> ExportAndZipAllCVs()
         {
-            List<string> langList = new List<string>() { "en", "jp" };
-            IList<CvInfoResponse> iCvInfos = await GetList();
-            List<CvInfoResponse> cvInfos = iCvInfos.ToList();
+            IList<CvInfoResponse> cvInfos = await GetList();
             using (var ms = new MemoryStream())
             {
                 using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
                 {
-                    foreach (string lang in langList)
+                    foreach (CvInfoResponse? cv in cvInfos)
                     {
-                        foreach (CvInfoResponse? cv in cvInfos)
+                        var cvData = await ExportAndZipCVDetail(cv.id);
+                        if (cvData != null)
                         {
-                            CvInfoResponse cvInfo = await GetById(cv.id);
-                            var cvData = await ExportExcelCVDetail(cvInfo, lang);
-                            if (cvData != null)
+                            var entry = archive.CreateEntry($"CV_{cv.name}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip");
+                            using (var entryStream = entry.Open())
                             {
-                                var entry = archive.CreateEntry($"CV_{cvInfo.name}_{lang.ToUpperInvariant()}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx");
-                                using (var entryStream = entry.Open())
-                                {
-                                    entryStream.Write(cvData, 0, cvData.Length);
-                                }
+                                entryStream.Write(cvData, 0, cvData.Length);
                             }
                         }
                     }
