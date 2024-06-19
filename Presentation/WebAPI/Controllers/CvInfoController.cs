@@ -110,6 +110,61 @@ namespace WebAPI.Controllers
             else
                 return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_003) });
         }
+
+        // <summary>
+        /// Export excel CV detail
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("{id}/export")]
+        public async Task<IActionResult> ExportExcelCVDetail(Guid id)
+        {
+            var fileName = $"CV_{id}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipCVDetail(id);
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
+        }
+
+        /// <summary>
+        /// Export excel CV template
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("export_template")]
+        public async Task<IActionResult> ExportExcelCVTemplate()
+        {
+            var fileName = $"CV_template.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipCVTemplate();
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
+        }
+
+        // <summary>
+        /// Export excel all CV
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("export_all")]
+        public async Task<IActionResult> ExportAndZipAllCVs()
+        {
+            var fileName = $"CVs_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipAllCVs();
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
+        }
     }
 }
 

@@ -14,5 +14,9 @@ namespace Application.Core.Interfaces.Core
         Task<int> Create(CvInfoRequest request);
         Task<int> Update(Guid id, CvInfoRequest request);
         Task<int> Delete(Guid id);
+
+        Task<byte[]> ExportAndZipCVDetail(Guid id);
+        Task<byte[]> ExportAndZipCVTemplate();
+        Task<byte[]> ExportAndZipAllCVs();
     }
 }
