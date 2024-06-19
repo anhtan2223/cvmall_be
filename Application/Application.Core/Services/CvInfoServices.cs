@@ -18,7 +18,7 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<CvInfo> cvInfoRepository;
         private int _minNumberOfProject = 6;
-        private string _templatePath = "..\\..\\Presentation\\WebAPI\\Assets\\CvInfo";
+        private string _templatePath = "../../Presentation/WebAPI/Assets/CvInfo";
 
         public CvInfoServices(IUnitOfWork _unitOfWork, IMapper _mapper) : base(_unitOfWork, _mapper)
         {
@@ -315,7 +315,7 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                await AddFileToMemoryStream(ms, $"{_templatePath}\\CV_{selectedLang}.xlsx");
+                await AddFileToMemoryStream(ms, $"{_templatePath}/CV_{selectedLang}.xlsx");
 
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
@@ -337,7 +337,7 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                await AddFileToMemoryStream(ms, $"{_templatePath}\\CV_{selectedLang}.xlsx");
+                await AddFileToMemoryStream(ms, $"{_templatePath}/CV_{selectedLang}.xlsx");
 
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
