@@ -235,26 +235,20 @@ namespace Application.Core.Services.Core
 
         public async Task<byte[]> ExportAndZipAllCVs()
         {
-            List<string> langList = new List<string>() { "en", "jp" };
-            IList<CvInfoResponse> iCvInfos = await GetList();
-            List<CvInfoResponse> cvInfos = iCvInfos.ToList();
+            IList<CvInfoResponse> cvInfos = await GetList();
             using (var ms = new MemoryStream())
             {
                 using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
                 {
-                    foreach (string lang in langList)
+                    foreach (CvInfoResponse? cv in cvInfos)
                     {
-                        foreach (CvInfoResponse? cv in cvInfos)
+                        var cvData = await ExportAndZipCVDetail(cv.id);
+                        if (cvData != null)
                         {
-                            CvInfoResponse cvInfo = await GetById(cv.id);
-                            var cvData = await ExportExcelCVDetail(cvInfo, lang);
-                            if (cvData != null)
+                            var entry = archive.CreateEntry($"CV_{cv.name}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip");
+                            using (var entryStream = entry.Open())
                             {
-                                var entry = archive.CreateEntry($"CV_{cvInfo.name}_{lang.ToUpperInvariant()}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx");
-                                using (var entryStream = entry.Open())
-                                {
-                                    entryStream.Write(cvData, 0, cvData.Length);
-                                }
+                                entryStream.Write(cvData, 0, cvData.Length);
                             }
                         }
                     }
