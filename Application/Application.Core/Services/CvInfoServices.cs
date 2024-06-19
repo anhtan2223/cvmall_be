@@ -27,7 +27,8 @@ namespace Application.Core.Services.Core
 
         public async Task<PagedList<CvInfoResponse>> GetPaged(RequestPaged request)
         {
-            string[] sortParts = request.sort.Split('.');
+            string sortRequest = request.sort ?? "user_code.asc";
+            string[] sortParts = sortRequest.Split('.');
             var queryField = sortParts[0];
             var order = sortParts[1];
 
@@ -66,7 +67,7 @@ namespace Application.Core.Services.Core
                         .GetQuery()
                         .ExcludeSoftDeleted()
                         .Where(x => string.IsNullOrEmpty(request.search) || x.name.ToLower().Contains(request.search.ToLower()))
-                        .SortBy(request.sort ?? "user_code.asc")
+                        .SortBy(sortRequest)
                         .Include(x => x.cvTechInfos)
                         .Include(y => y.bizInfos)
                         .ToPagedListAsync(request.page, request.size);
