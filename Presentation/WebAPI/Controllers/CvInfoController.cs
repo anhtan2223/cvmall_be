@@ -69,12 +69,19 @@ namespace WebAPI.Controllers
         [Route("")]
         public async Task<IActionResult> Create([FromBody] CvInfoRequest request)
         {
-            int count = await cvInfoServices.Create(request);
+            try
+            {
+                int count = await cvInfoServices.Create(request);
 
-            if (count >= 1)
-                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001 ) });
-            else
-                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+                if (count >= 1)
+                    return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+                else
+                    return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { code = ResponseCode.SystemError, message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -87,11 +94,18 @@ namespace WebAPI.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] CvInfoRequest request)
         {
-            var count = await cvInfoServices.Update(id, request);
-            if (count >= 1)
-                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_002) });
-            else
-                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_002) });
+            try
+            {
+                var count = await cvInfoServices.Update(id, request);
+                if (count >= 1)
+                    return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_002) });
+                else
+                    return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_002) });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { code = ResponseCode.SystemError, message = ex.Message });
+            }
         }
 
         /// <summary>
