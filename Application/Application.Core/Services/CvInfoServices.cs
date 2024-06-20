@@ -126,9 +126,21 @@ namespace Application.Core.Services.Core
             return data;
         }
 
+        public async Task<bool> CheckUserCode(string userCode)
+        {
+            return await _unitOfWork.GetRepository<CvInfo>()
+                                    .GetQuery()
+                                    .AnyAsync(x => x.user_code == userCode);
+        }
+
         public async Task<int> Create(CvInfoRequest request)
         {
             var count = 0;
+
+            if (await CheckUserCode(request.user_code))
+            {
+                throw new Exception("User code already exits");
+            }
 
             request = ValidateRequest(request);
 
@@ -150,6 +162,11 @@ namespace Application.Core.Services.Core
                             .GetQuery()
                             .FindActiveById(id)
                             .FirstOrDefault();
+            
+            if (await CheckUserCode(request.user_code))
+            {
+                throw new Exception("User code already exits");
+            }
 
             if (entity == null)
                 return count;
