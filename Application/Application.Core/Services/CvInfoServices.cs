@@ -126,7 +126,7 @@ namespace Application.Core.Services.Core
             return data;
         }
 
-        public async Task<bool> CheckUsserCode(string userCode)
+        public async Task<bool> CheckUserCode(string userCode)
         {
             return await _unitOfWork.GetRepository<CvInfo>()
                                     .GetQuery()
@@ -137,7 +137,7 @@ namespace Application.Core.Services.Core
         {
             var count = 0;
 
-            if (await CheckUsserCode(request.user_code))
+            if (await CheckUserCode(request.user_code))
             {
                 throw new Exception("User code already exits");
             }
@@ -163,7 +163,7 @@ namespace Application.Core.Services.Core
                             .FindActiveById(id)
                             .FirstOrDefault();
             
-            if (await CheckUsserCode(request.user_code))
+            if (await CheckUserCode(request.user_code))
             {
                 throw new Exception("User code already exits");
             }
