@@ -163,7 +163,7 @@ namespace Application.Core.Services.Core
                             .FindActiveById(id)
                             .FirstOrDefault();
             
-            if (await CheckUserCode(request.user_code))
+            if (request.user_code != entity.user_code && await CheckUserCode(request.user_code))
             {
                 throw new Exception("User code already exits");
             }
