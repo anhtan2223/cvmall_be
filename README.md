@@ -28,12 +28,13 @@
   ```cs
   // c.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
   ```
-- Then
+- Add Migrations
 
   ```sh
   dotnet ef migrations add "init_databse" --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
-  
+- Update Database
+
   ```sh
   dotnet ef database update --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
@@ -41,6 +42,8 @@
   ```sh
   dotnet ef database drop --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
+- Drop Database
+
   ```sh
   dotnet ef migrations remove --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
