@@ -38,11 +38,11 @@
   ```sh
   dotnet ef database update --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
-- Remove migrations
+- Drop Database
   ```sh
   dotnet ef database drop --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
-- Drop Database
+- Remove migrations
 
   ```sh
   dotnet ef migrations remove --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
