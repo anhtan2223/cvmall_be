@@ -27,6 +27,14 @@ namespace Infrastructure
         public virtual DbSet<CvTechnicalInfo>? CvTechnicalInfos { get; set; }
         public virtual DbSet<BizInfo>? BizInfos { get; set; }
 
+        public virtual DbSet<Employee>? Employees { get; set; }
+        public virtual DbSet<Department>? Departments { get; set; }
+        public virtual DbSet<EmployeeDepartment>? EmployeeDepartments { get; set; }
+        public virtual DbSet<Position>? Positions { get; set; }
+        public virtual DbSet<EmployeePosition>? EmployeePositions { get; set; }
+        public virtual DbSet<Timesheet>? Timesheets { get; set; }
+        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
