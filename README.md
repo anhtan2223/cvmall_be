@@ -33,9 +33,16 @@
   ```sh
   dotnet ef migrations add "init_databse" --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
-
+  
   ```sh
   dotnet ef database update --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
+  ```
+- Remove migrations
+  ```sh
+  dotnet ef database drop --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
+  ```
+  ```sh
+  dotnet ef migrations remove --project Infrastructure --startup-project Presentation/WebAPI --context "ApplicationDbContext"
   ```
 
   ## To run Project
