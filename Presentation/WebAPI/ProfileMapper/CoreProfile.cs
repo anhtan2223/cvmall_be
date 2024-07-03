@@ -4,6 +4,7 @@ using Framework.Core.Collections;
 using Application.Core.Contracts;
 using Domain.Entities;
 using Framework.Core.Extensions;
+using Application.Core.Contracts.Department;
 
 namespace WebAPI.ProfileMapper
 {
@@ -72,6 +73,10 @@ namespace WebAPI.ProfileMapper
             CreateMap<IPagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<PagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<Technical, TechnicalResponse>();
+
+            CreateMap<DepartmentRequest, Department>();
+            CreateMap<Department, DepartmentResponse>();
+
         }
     }
 }

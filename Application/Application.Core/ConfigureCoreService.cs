@@ -24,7 +24,7 @@ namespace Application.Core.Extensions
 
             services.AddScoped<IResourceServices, ResourceServices>();
             services.AddScoped<ILogServices, LogServices>();
-
+            services.AddScoped<IDepartmentServices, DepartmentServices>();
 
             return services;
         }
