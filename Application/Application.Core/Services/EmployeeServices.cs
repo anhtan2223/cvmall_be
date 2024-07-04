@@ -89,7 +89,6 @@ namespace Application.Core.Services.Core
                 entity.EmployeeDepartments = entity?.EmployeeDepartments
                                                 ?.Where(x => !x.del_flg)
                                                 .ToList();                                
-                
             }
 
             var data = _mapper.Map<EmployeeResponse>(entity);
@@ -126,6 +125,66 @@ namespace Application.Core.Services.Core
 
             _mapper.Map(request, entity);
             await employeeRepository.UpdateEntityAsync(entity);
+
+            var employeePositionEntityList = _unitOfWork.GetRepository<EmployeePosition>()
+                                            .GetQuery()
+                                            .ExcludeSoftDeleted()
+                                            .Where(x => x.employee_id == id);
+
+            var employeeDepartmentEntityList = _unitOfWork.GetRepository<EmployeeDepartment>()
+                                                .GetQuery()
+                                                .ExcludeSoftDeleted()
+                                                .Where(x => x.employee_id == id);
+
+            var employeePositionRequestList = request.EmployeePositions;
+
+            var employeeDepartmentRequestList = request.EmployeeDepartments;
+
+            if (employeePositionRequestList?.Count > 0)
+            {
+                // Delete or update position
+                foreach (var itemEmployeePositionEntity in employeePositionEntityList)
+                {
+                    var EPinRq = employeePositionRequestList.Find(x => x.id == itemEmployeePositionEntity.id);
+
+                    if (EPinRq == null)
+                    {
+                        await _unitOfWork.GetRepository<EmployeePosition>()
+                                    .DeleteEntityAsync(itemEmployeePositionEntity);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var itemEmployeePositionEntity in employeePositionEntityList)
+                {
+                    await _unitOfWork.GetRepository<EmployeePosition>()
+                                    .DeleteEntityAsync(itemEmployeePositionEntity);
+                }
+            }
+
+            if (employeeDepartmentRequestList?.Count > 0)
+            {
+                // Update or Delete Department
+                foreach (var itemEmployeeDepartmentEntity in employeeDepartmentEntityList)
+                {
+                    var EDinRq = employeeDepartmentRequestList.Find(x => x.id == itemEmployeeDepartmentEntity.id);
+
+                    if (EDinRq == null)
+                    {
+                        await _unitOfWork.GetRepository<EmployeeDepartment>()
+                                    .DeleteEntityAsync(itemEmployeeDepartmentEntity);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var itemEmployeeDepartmentEntity in employeeDepartmentEntityList)
+                {
+                    await _unitOfWork.GetRepository<EmployeeDepartment>()
+                                    .DeleteEntityAsync(itemEmployeeDepartmentEntity);
+                }
+            }
 
             count = await _unitOfWork.SaveChangesAsync();
             return count;
