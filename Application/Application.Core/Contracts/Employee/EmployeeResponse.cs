@@ -1,16 +1,10 @@
-using System.Security.AccessControl;
-using Domain.Abstractions;
+using Domain.Entities;
 
-namespace Domain.Entities
+namespace Application.Core.Contracts
 {
-    public partial class Employee : BaseEntity
+    public class EmployeeResponse
     {
-        public Employee()
-        {
-            id = Guid.NewGuid();
-            EmployeePositions = new HashSet<EmployeePosition>();
-            EmployeeDepartments = new HashSet<EmployeeDepartment>();
-        }
+        public Guid id { get; set; }
 
         public string employee_code { get; set; }
 
@@ -44,10 +38,8 @@ namespace Domain.Entities
 
         public bool is_married {get; set;}
 
-        public virtual ICollection<Timesheet>? Timesheets { get; set; }
-        public virtual ICollection<EmployeeDepartment>? EmployeeDepartments { get; set; }
-        public virtual ICollection<EmployeePosition>? EmployeePositions { get; set; }
-        
-
+        public List<EmployeePositionResponse>? EmployeePositions { get; set; }
+        public List<EmployeeDepartmentResponse>? EmployeeDepartments { get; set; }
+        public List<Timesheet>? Timesheets {get; set;}
     }
 }
