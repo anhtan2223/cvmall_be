@@ -10,9 +10,9 @@ namespace Domain.Entities
         }
 
         public Guid employee_id { get; set; }
-        public Guid department_id { get; set; }
-
         public Employee Employee {get; set;}
+        
+        public Guid department_id { get; set; }
         public Department Department {get; set;}
 
     }

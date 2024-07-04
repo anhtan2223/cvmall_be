@@ -20,6 +20,8 @@ namespace Application.Core.Extensions
             services.AddScoped<ITechnicalCategoryServices, TechnicalCategoryServices>();
             services.AddScoped<ITechnicalServices, TechnicalServices>();
             services.AddScoped<IBizInfoServices, BizInfoServices>();
+            services.AddScoped<IEmployeeServices, EmployeeServices>();
+            services.AddScoped<IPositionServices, PositionServices>();
             services.AddScoped<ICvTechnicalInfoServices, CvTechnicalInfoServices>();
 
             services.AddScoped<IResourceServices, ResourceServices>();
