@@ -99,6 +99,10 @@ namespace WebAPI.ProfileMapper
             CreateMap<PagedList<EmployeePosition>, PagedList<EmployeePositionResponse>>();
             CreateMap<EmployeePosition, EmployeePositionResponse>();
 
+            CreateMap<TimesheetRequest, Timesheet>();
+            CreateMap<IPagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<PagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<Timesheet, TimesheetResponse>();
         }
     }
 }

@@ -23,6 +23,7 @@ namespace Application.Core.Extensions
             services.AddScoped<IEmployeeServices, EmployeeServices>();
             services.AddScoped<IPositionServices, PositionServices>();
             services.AddScoped<ICvTechnicalInfoServices, CvTechnicalInfoServices>();
+            services.AddScoped<ITimesheetServices, TimesheetServices>();
 
             services.AddScoped<IResourceServices, ResourceServices>();
             services.AddScoped<ILogServices, LogServices>();
