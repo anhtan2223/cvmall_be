@@ -21,6 +21,7 @@ namespace Application.Core.Extensions
             services.AddScoped<ITechnicalServices, TechnicalServices>();
             services.AddScoped<IBizInfoServices, BizInfoServices>();
             services.AddScoped<ICvTechnicalInfoServices, CvTechnicalInfoServices>();
+            services.AddScoped<ITimesheetServices, TimesheetServices>();
 
             services.AddScoped<IResourceServices, ResourceServices>();
             services.AddScoped<ILogServices, LogServices>();

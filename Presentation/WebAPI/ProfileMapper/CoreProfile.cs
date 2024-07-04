@@ -72,6 +72,11 @@ namespace WebAPI.ProfileMapper
             CreateMap<IPagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<PagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<Technical, TechnicalResponse>();
+
+            CreateMap<TimesheetRequest, Timesheet>();
+            CreateMap<IPagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<PagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<Timesheet, TimesheetResponse>();
         }
     }
 }

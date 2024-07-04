@@ -14,6 +14,7 @@
         public static string LogAction = "LogAction";
         public static string User = "User";
         public static string OrgMember = "OrgMember";
+        public static string Timesheet = "Timesheet";
     }
 
     public class ScreenKey
