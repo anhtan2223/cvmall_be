@@ -32,11 +32,12 @@ namespace Application.Core.Services.Core
 
         public async Task<PagedList<TimesheetResponse>> GetPaged(TimesheetRequestPaged request)
         {
-
+            var month = request.month != 0 ? request.month : DateTime.Now.Month;
+            var year = request.year != 0 ? request.year : DateTime.Now.Year;
             var timesheetQuery = timesheetRepository
                 .GetQuery()
                 .ExcludeSoftDeleted()
-                .Where(x => x.month_year.Month == request.month && x.month_year.Year == request.year);
+                .Where(x => x.month_year.Month == month && x.month_year.Year == year);
 
             var query = employeeRepository
                 .GetQuery()
@@ -59,56 +60,44 @@ namespace Application.Core.Services.Core
                         timesheet_id = (Guid?)(x.timesheet != null ? x.timesheet.id : null),
                         group = x.timesheet != null ? x.timesheet.group : null,
                         month_year = (DateTime?)(x.timesheet != null ? x.timesheet.month_year : null),
-                        project_participation_hours = x.timesheet != null ? x.timesheet.project_participation_hours : null,
-                        consumed_hours = x.timesheet != null ? x.timesheet.consumed_hours : null,
-                        late_early_departures = x.timesheet != null ? x.timesheet.late_early_departures : null,
-                        absence_hours = x.timesheet != null ? x.timesheet.absence_hours : null,
+                        project_participation_hours = x.timesheet != null ? x.timesheet.project_participation_hours : 0,
+                        consumed_hours = x.timesheet != null ? x.timesheet.consumed_hours : 0,
+                        late_early_departures = x.timesheet != null ? x.timesheet.late_early_departures : 0,
+                        absence_hours = x.timesheet != null ? x.timesheet.absence_hours : 0,
                         Employee = x.employee,
                         Timesheet = x.timesheet,
                 })
                 .Where(x => string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search.ToLower()))
-                .SortBy(request.sort);
-
+                .SortBy(request.sort ?? "employee_id.asc");
 
             if (!request.branchFilters.IsNullOrEmpty())
             {
                 query = query.Where(x => request.branchFilters.Contains(x.branch));
             }
-
             if (!request.groupFilters.IsNullOrEmpty())
             {
                 query = query.Where(x => request.groupFilters.Contains(x.group));
             }
-
             if (!request.stateFilters.IsNullOrEmpty())
             {
                 query = query.Where(x => request.stateFilters.Contains(x.state));
             }
 
-            var data = query.ToPagedList(request.page, request.size);
+            var timesheetsQuery = query.Select( x => new Timesheet {
+                        id = x.Timesheet != null ? x.Timesheet.id : Guid.Empty,
+                        employee_id = x.Employee.id,
+                        group = x.Timesheet != null ? x.Timesheet.group : null,
+                        month_year = x.Timesheet != null ? x.Timesheet.month_year : new DateTime(year, month, 1),
+                        project_participation_hours = x.Timesheet != null ? x.Timesheet.project_participation_hours : null,
+                        consumed_hours = x.Timesheet != null ? x.Timesheet.consumed_hours : null,
+                        late_early_departures = x.Timesheet != null ? x.Timesheet.late_early_departures : null,
+                        absence_hours = x.Timesheet != null ? x.Timesheet.absence_hours : null,
+                        Employee = x.Employee,
+                });
 
-            var timesheets = new List<Timesheet>();
+            var data = timesheetsQuery.ToPagedList(request.page, request.size);
 
-            foreach (var item in data.data)
-            {
-                if (item.Timesheet != null)
-                {
-                    timesheets.Add(item.Timesheet);
-                }
-                else
-                {
-                    timesheets.Add(new Timesheet
-                    {
-                        employee_id = item.Employee.id,
-                        month_year = new DateTime(request.year, request.month, 1),
-                        Employee = item.Employee,
-                    });
-                }
-            }
-
-            PagedList<Timesheet> pagedList = timesheets.ToPagedList(request.page, request.size);
-
-            var dataMapping = _mapper.Map<PagedList<TimesheetResponse>>(pagedList);
+            var dataMapping = _mapper.Map<PagedList<TimesheetResponse>>(data);
 
             return dataMapping;
         }
@@ -160,16 +149,19 @@ namespace Application.Core.Services.Core
             return count;
         }
 
-        public async Task<int> UpdateList(List<TimesheetRequest> requests)
+        public async Task<int> UpdateMulti(List<TimesheetRequest> requests)
         {
-            // TODO: do not create timesheet if that timesheet data is empty
             var count = 0;
 
             using (var transaction = await _unitOfWork.BeginTransactionAsync())
             {
                 try
                 {
-                    foreach (var request in requests)
+                    var existedTimesheets = requests
+                    .Where(x => x.id != Guid.Empty)
+                    .ToList();
+
+                    foreach (var request in existedTimesheets)
                     {
                         var entity = timesheetRepository
                             .GetQuery()
@@ -182,6 +174,30 @@ namespace Application.Core.Services.Core
                         _mapper.Map(request, entity);
 
                         await timesheetRepository.UpdateEntityAsync(entity);
+
+                        count++;
+                    }
+
+                    var newTimesheets = requests
+                    .Where(x => x.id == Guid.Empty)
+                    .ToList();
+
+                    foreach (var request in newTimesheets)
+                    {
+                        var timesheet = _mapper.Map<Timesheet>(request);
+
+                        if (
+                            timesheet.group == null &&
+                            timesheet.project_participation_hours == 0 &&
+                            timesheet.consumed_hours == 0 &&
+                            timesheet.late_early_departures == 0 &&
+                            timesheet.absence_hours == 0 
+                            )
+                        {
+                            continue;
+                        }
+
+                        await timesheetRepository.AddEntityAsync(timesheet);
 
                         count++;
                     }
