@@ -31,7 +31,7 @@ namespace Application.Core.Services.Core
                     .Where(x =>  ( request.branch == null ) || request.branch.Contains(x.branch) )
                     .Where(x =>  ( request.department == null ) || x.EmployeeDepartments.Any(y => request.department.Contains(y.Department.name) ) )
                     .Where(x =>  ( request.position == null ) || x.EmployeePositions.Any(y => request.position.Contains(y.Position.name) ) )
-                    .Where(x =>  string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search) || x.initial_name.ToLower().Contains(request.search)  )
+                    .Where(x =>  string.IsNullOrEmpty(request.search) || (x.full_name.ToLower().Contains(request.search.ToLower())  || x.initial_name.ToLower().Contains(request.search.ToLower())))
                     .SortBy(request.sort ?? "updated_at.desc")
                     .Include(x => x.EmployeePositions)
                         .ThenInclude(ep => ep.Position)
