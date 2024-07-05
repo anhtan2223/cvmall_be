@@ -7,6 +7,7 @@ using Application.Common.Abstractions;
 using Application.Core.Interfaces.Core;
 // using System.Data.Entity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 
 namespace Application.Core.Services.Core
@@ -96,10 +97,23 @@ namespace Application.Core.Services.Core
             return data;
         }
 
+        public async Task<bool> CheckEmployeeCode(string employeeCode)
+        {
+            return await _unitOfWork.GetRepository<Employee>()
+                                    .GetQuery()
+                                    .AnyAsync(x => x.employee_code == employeeCode);
+        }
+
         public async Task<int> Create(EmployeeRequest request)
         {
             var count = 0;
 
+            string pattern = @"^VHEC-\d+$";
+            Regex regex = new Regex(pattern);
+            if(!regex.IsMatch(request.employee_code) || await CheckEmployeeCode(request.employee_code))
+            {
+                return 0;
+            }
 
             var Employee = _mapper.Map<Employee>(request);
 
@@ -122,6 +136,15 @@ namespace Application.Core.Services.Core
 
             if (entity == null)
                 return count;
+
+            string pattern = @"^VHEC-\d+$";
+            Regex regex = new Regex(pattern);
+            if(!regex.IsMatch(request.employee_code) || (await CheckEmployeeCode(request.employee_code) && entity.employee_code != request.employee_code))
+            {
+                return count;
+            }
+            
+            
 
             _mapper.Map(request, entity);
             await employeeRepository.UpdateEntityAsync(entity);
