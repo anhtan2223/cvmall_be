@@ -110,6 +110,18 @@ namespace WebAPI.Controllers
             else
                 return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_003) });
         }
+
+        /// <summary>
+        /// Get list team leaders
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("group")]
+        public async Task<IActionResult> GetGroups()
+        {
+            var data = await _employeeServices.GetGroups();
+            return Ok(data);
+        }
     }
 }
 

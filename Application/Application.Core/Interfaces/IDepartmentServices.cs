@@ -14,5 +14,7 @@ namespace Application.Core.Interfaces.Core
     {
         Task<IList<DepartmentResponse>> GetAll();
         Task<int> Create(DepartmentRequest newDepartment);
+        Task<int> Update(Guid id, DepartmentRequest updateDepartment);
+        Task<int> Delete(Guid id);
     }
 }
