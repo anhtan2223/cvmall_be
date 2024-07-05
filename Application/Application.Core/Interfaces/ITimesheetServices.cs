@@ -11,7 +11,7 @@ namespace Application.Core.Interfaces.Core
         // Task<TimesheetResponse> GetById(Guid id);
         // Task<int> Create(TimesheetRequest request);
         // Task<int> Update(Guid id, TimesheetRequest request);
-        Task<int> UpdateList(List<TimesheetRequest> requestList);
+        Task<int> UpdateMulti(List<TimesheetRequest> requestList);
         // Task<int> Delete(Guid id);
         Task<byte[]> ExportAllExcelByMonthYear( int month, int year);
     }

@@ -115,12 +115,12 @@ namespace WebAPI.Controllers
         /// <param name="requestList"></param>
         /// <returns></returns>
         [HttpPut]
-        [Route("")]
-        public async Task<IActionResult> UpdateList([FromBody] List<TimesheetRequest> requestList)
+        [Route("update-multi")]
+        public async Task<IActionResult> UpdateMulti([FromBody] List<TimesheetRequest> requestList)
         {
             try
             {
-                var count = await timesheetServices.UpdateList(requestList);
+                var count = await timesheetServices.UpdateMulti(requestList);
                 if (count >= 1)
                     return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_002) });
                 else
