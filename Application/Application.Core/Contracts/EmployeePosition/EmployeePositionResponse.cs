@@ -6,6 +6,6 @@ namespace Application.Core.Contracts
     {
         public Guid id {get; set;}
         public Guid position_id { get; set; }
-        public Position Position {get; set;}
+        public PositionResponse position {get; set;}
     }
 }

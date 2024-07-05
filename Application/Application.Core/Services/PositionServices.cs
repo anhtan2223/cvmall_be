@@ -5,6 +5,7 @@ using Application.Core.Contracts;
 using Domain.Entities;
 using Application.Common.Abstractions;
 using Application.Core.Interfaces.Core;
+using System.Data.Entity;
 
 namespace Application.Core.Services.Core
 {
@@ -63,6 +64,12 @@ namespace Application.Core.Services.Core
         public async Task<int> Create(PositionRequest request)
         {
             var count = 0;
+            
+            var isValid = positionRepository.GetQuery().Where(x => x.name == request.name).Any();
+            if(isValid){
+                return count ;
+            }
+            
 
             var Position = _mapper.Map<Position>(request);
 

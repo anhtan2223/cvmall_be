@@ -10,8 +10,10 @@ namespace Application.Core.Interfaces.Core
 
         Task<IList<EmployeeResponse>> GetList();
         Task<EmployeeResponse> GetById(Guid id);
+        Task<bool> CheckEmployeeCode(string employeeCode);
         Task<int> Create(EmployeeRequest request);
         Task<int> Update(Guid id, EmployeeRequest request);
         Task<int> Delete(Guid id);
+        Task<IList<EmployeeResponse>> GetGroups();
     }
 }

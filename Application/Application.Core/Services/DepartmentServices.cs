@@ -51,6 +51,40 @@ namespace Application.Core.Services.Core
             return dataMapping;
         }
 
+        public async Task<int> Update(Guid id, DepartmentRequest request)
+        {
+            var count = 0;
+            var entity = departmentRepository
+                            .GetQuery()
+                            .FindActiveById(id)
+                            .FirstOrDefault();
+
+            if (entity == null)
+                return count;
+
+            _mapper.Map(request, entity);
+            await departmentRepository.UpdateEntityAsync(entity);
+
+            count = await _unitOfWork.SaveChangesAsync();
+            return count;
+        }
+
+        public async Task<int> Delete(Guid id)
+        {
+            var count = 0;
+            var entity = departmentRepository
+                .GetQuery()
+                .FindActiveById(id)
+                .FirstOrDefault();
+
+            if (entity == null)
+                return count;
+
+            await departmentRepository.DeleteEntityAsync(entity);
+            count = await _unitOfWork.SaveChangesAsync();
+            return count;
+        }
+
         private bool CheckExistedDeparment(DepartmentRequest department)
         {
             return departmentRepository.GetQuery().Where(x => x.name == department.name).Any();
