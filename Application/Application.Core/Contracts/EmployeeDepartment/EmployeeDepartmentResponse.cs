@@ -6,7 +6,7 @@ namespace Application.Core.Contracts
     {
         public Guid id {get; set;}
         public Guid department_id { get; set; }
-        public Domain.Entities.Department Department {get; set;}
+        public DepartmentResponse department {get; set;}
 
     }
 }

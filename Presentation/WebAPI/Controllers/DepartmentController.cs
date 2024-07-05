@@ -53,5 +53,35 @@ namespace WebAPI.Controllers
             else
                 return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] DepartmentRequest request)
+        {
+            int count = await departmentServices.Update(id, request);
+
+            if (count >= 1)
+                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+            else
+                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> Destroy(Guid id)
+        {
+            int count = await departmentServices.Delete(id);
+
+            if (count >= 1)
+                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+            else
+                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+        }
     }
 }

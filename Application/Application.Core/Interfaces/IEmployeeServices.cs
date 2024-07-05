@@ -13,5 +13,6 @@ namespace Application.Core.Interfaces.Core
         Task<int> Create(EmployeeRequest request);
         Task<int> Update(Guid id, EmployeeRequest request);
         Task<int> Delete(Guid id);
+        Task<IList<EmployeeResponse>> GetGroups();
     }
 }

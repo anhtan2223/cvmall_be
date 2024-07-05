@@ -201,5 +201,26 @@ namespace Application.Core.Services.Core
             var count = await _unitOfWork.SaveChangesAsync();
             return count;
         }
+
+        public async Task<IList<EmployeeResponse>> GetGroups()
+        {
+            var data = await employeeRepository
+                .GetQuery()
+                .ExcludeSoftDeleted()
+                .Where(x => x.EmployeePositions.Any(
+                    y => y.Position.name.ToLower() == "team leader" || 
+                    y.Position.name.ToLower() == "trưởng nhóm")
+                )
+                .ToPagedListAsync(1, 9999);
+            
+            List<EmployeeResponse> dataMapping = new();
+
+            if (data?.data?.Count > 0)
+            {
+                dataMapping = _mapper.Map<IList<Employee>, List<EmployeeResponse>>(data.data);
+            }
+
+            return dataMapping;
+        }
     }
 }
