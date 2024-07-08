@@ -67,6 +67,7 @@ namespace Application.Core.Services.Core
                         Employee = x.employee,
                         Timesheet = x.timesheet,
                 })
+                .Where(x => x.Employee.EmployeeDepartments == null ? false : x.Employee.EmployeeDepartments.Any(ed => ed.Department.name.Equals("Phòng dự án")))
                 .Where(x => string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search.ToLower()))
                 .SortBy(request.sort ?? "employee_id.asc");
 
@@ -157,47 +158,59 @@ namespace Application.Core.Services.Core
             {
                 try
                 {
-                    var existedTimesheets = requests
-                    .Where(x => x.id != Guid.Empty)
-                    .ToList();
-
-                    foreach (var request in existedTimesheets)
+                    foreach (var request in requests)
                     {
-                        var entity = timesheetRepository
+                        if(request.id == Guid.Empty)
+                        {
+                            if (
+                                request.group == null &&
+                                request.project_participation_hours == 0 &&
+                                request.consumed_hours == 0 &&
+                                request.late_early_departures == 0 &&
+                                request.absence_hours == 0 
+                                )
+                            {
+                                continue;
+                            }
+                            if (DateTime.Now.Month != request.month_year.Month
+                                || DateTime.Now.Year != request.month_year.Year)
+                            {
+                                throw new ArgumentException();
+                            }
+
+                            var entity = _mapper.Map<Timesheet>(request);
+
+                            await timesheetRepository.AddEntityAsync(entity);
+
+                        } else {
+                            var entity = timesheetRepository
                             .GetQuery()
                             .FindActiveById(request.id)
                             .FirstOrDefault();
+                            if (entity == null)
+                                throw new ArgumentException();
 
-                        if (entity == null)
-                            continue;
+                            if(!entity.group.Equals(request.group)) {
+                                if (DateTime.Now.Month != request.month_year.Month
+                                    || DateTime.Now.Year != request.month_year.Year)
+                                {
+                                    throw new ArgumentException();
+                                }
+                                var employee = await employeeRepository
+                                .GetQuery()
+                                .FindActiveById(entity.employee_id)
+                                .FirstOrDefaultAsync();
+                                if (employee != null)
+                                {
+                                    employee.current_group = request.group;
+                                    await employeeRepository.UpdateEntityAsync(employee);
+                                }
+                            }
 
-                        _mapper.Map(request, entity);
+                            _mapper.Map(request, entity);
 
-                        await timesheetRepository.UpdateEntityAsync(entity);
-
-                        count++;
-                    }
-
-                    var newTimesheets = requests
-                    .Where(x => x.id == Guid.Empty)
-                    .ToList();
-
-                    foreach (var request in newTimesheets)
-                    {
-                        var timesheet = _mapper.Map<Timesheet>(request);
-
-                        if (
-                            timesheet.group == null &&
-                            timesheet.project_participation_hours == 0 &&
-                            timesheet.consumed_hours == 0 &&
-                            timesheet.late_early_departures == 0 &&
-                            timesheet.absence_hours == 0 
-                            )
-                        {
-                            continue;
+                            await timesheetRepository.UpdateEntityAsync(entity);
                         }
-
-                        await timesheetRepository.AddEntityAsync(timesheet);
 
                         count++;
                     }

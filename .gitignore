@@ -10,6 +10,9 @@
 /Presentation/WebAPI/obj
 /Presentation/WebAPI/wwwroot/Uploads
 /.vs
+/.vs/
+/.vscode
+/.vscode/
 /Application/Application.Core/obj
 /Application/Application.Core/bin
 /.DS_Store
