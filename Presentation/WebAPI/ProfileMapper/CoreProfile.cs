@@ -4,6 +4,7 @@ using Framework.Core.Collections;
 using Application.Core.Contracts;
 using Domain.Entities;
 using Framework.Core.Extensions;
+using Application.Core.Contracts.Department;
 
 namespace WebAPI.ProfileMapper
 {
@@ -72,6 +73,36 @@ namespace WebAPI.ProfileMapper
             CreateMap<IPagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<PagedList<Technical>, PagedList<TechnicalResponse>>();
             CreateMap<Technical, TechnicalResponse>();
+
+            CreateMap<DepartmentRequest, Department>();
+            CreateMap<IPagedList<Department>, PagedList<DepartmentResponse>>();
+            CreateMap<PagedList<Department>, PagedList<DepartmentResponse>>();
+            CreateMap<Department, DepartmentResponse>();
+
+            CreateMap<EmployeeDepartmentRequest, EmployeeDepartment>();
+            CreateMap<IPagedList<EmployeeDepartment>, PagedList<EmployeeDepartmentResponse>>();
+            CreateMap<PagedList<EmployeeDepartment>, PagedList<EmployeeDepartmentResponse>>();
+            CreateMap<EmployeeDepartment, EmployeeDepartmentResponse>();
+
+            CreateMap<EmployeeRequest, Employee>();
+            CreateMap<IPagedList<Employee>, PagedList<EmployeeResponse>>();
+            CreateMap<PagedList<Employee>, PagedList<EmployeeResponse>>();
+            CreateMap<Employee, EmployeeResponse>();
+
+            CreateMap<PositionRequest, Position>();
+            CreateMap<IPagedList<Position>, PagedList<PositionResponse>>();
+            CreateMap<PagedList<Position>, PagedList<PositionResponse>>();
+            CreateMap<Position, PositionResponse>();
+
+            CreateMap<EmployeePositionRequest, EmployeePosition>();
+            CreateMap<IPagedList<EmployeePosition>, PagedList<EmployeePositionResponse>>();
+            CreateMap<PagedList<EmployeePosition>, PagedList<EmployeePositionResponse>>();
+            CreateMap<EmployeePosition, EmployeePositionResponse>();
+
+            CreateMap<TimesheetRequest, Timesheet>();
+            CreateMap<IPagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<PagedList<Timesheet>, PagedList<TimesheetResponse>>();
+            CreateMap<Timesheet, TimesheetResponse>();
         }
     }
 }

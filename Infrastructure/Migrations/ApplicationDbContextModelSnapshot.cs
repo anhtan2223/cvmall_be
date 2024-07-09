@@ -88,15 +88,24 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("prj_content_jp")
+                        .HasColumnType("text");
+
                     b.Property<string>("prj_name")
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
+                    b.Property<string>("prj_name_jp")
+                        .HasColumnType("text");
+
                     b.Property<string>("role")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("role_jp")
+                        .HasColumnType("text");
 
                     b.Property<bool>("system_analysis")
                         .ValueGeneratedOnAdd()
@@ -138,6 +147,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
+                    b.Property<string>("certificate1_name_jp")
+                        .HasColumnType("text");
+
                     b.Property<int?>("certificate1_year")
                         .HasColumnType("integer");
 
@@ -145,12 +157,18 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
+                    b.Property<string>("certificate2_name_jp")
+                        .HasColumnType("text");
+
                     b.Property<int?>("certificate2_year")
                         .HasColumnType("integer");
 
                     b.Property<string>("certificate3_name")
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
+
+                    b.Property<string>("certificate3_name_jp")
+                        .HasColumnType("text");
 
                     b.Property<int?>("certificate3_year")
                         .HasColumnType("integer");
@@ -219,6 +237,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
+                    b.Property<string>("last_university_name_jp")
+                        .HasColumnType("text");
+
                     b.Property<string>("name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -228,12 +249,18 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("note_jp")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("org_id")
                         .HasColumnType("uuid");
 
                     b.Property<string>("subject")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("subject_jp")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("updated_at")
                         .HasColumnType("timestamp without time zone");
@@ -248,6 +275,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("work_process")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("work_process_jp")
+                        .HasColumnType("text");
 
                     b.HasKey("id");
 
@@ -294,6 +324,193 @@ namespace Infrastructure.Migrations
                     b.HasIndex("TechnicalId");
 
                     b.ToTable("cv_technical_info", "public");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Department", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.ToTable("e_department", "public");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Employee", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("birthday")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("branch")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("company_email")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("current_address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("current_group")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("date_issue")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("employee_code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("full_name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("id_number")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("initial_name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("is_married")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("location_issue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("permanent_address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("personal_email")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("phone")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<int>("state")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.ToTable("e_employee", "public");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EmployeeDepartment", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("department_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("employee_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("department_id");
+
+                    b.HasIndex("employee_id");
+
+                    b.ToTable("e_employee_department", "public");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EmployeePosition", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("employee_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("position_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("employee_id");
+
+                    b.HasIndex("position_id");
+
+                    b.ToTable("e_employee_positon", "public");
                 });
 
             modelBuilder.Entity("Domain.Entities.Function", b =>
@@ -530,6 +747,36 @@ namespace Infrastructure.Migrations
                     b.ToTable("a_permission", "public");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Position", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.ToTable("e_position", "public");
+                });
+
             modelBuilder.Entity("Domain.Entities.Resource", b =>
                 {
                     b.Property<Guid>("id")
@@ -743,6 +990,56 @@ namespace Infrastructure.Migrations
                     b.ToTable("technical_category", "public");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Timesheet", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<float?>("absence_hours")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("consumed_hours")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("created_by")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("del_flg")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("employee_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("group")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("late_early_departures")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("month_year")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<float?>("project_participation_hours")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime?>("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("updated_by")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("employee_id");
+
+                    b.ToTable("e_timesheet", "public");
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("id")
@@ -944,6 +1241,44 @@ namespace Infrastructure.Migrations
                     b.Navigation("Technical");
                 });
 
+            modelBuilder.Entity("Domain.Entities.EmployeeDepartment", b =>
+                {
+                    b.HasOne("Domain.Entities.Department", "Department")
+                        .WithMany("EmployeeDepartments")
+                        .HasForeignKey("department_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Employee", "Employee")
+                        .WithMany("EmployeeDepartments")
+                        .HasForeignKey("employee_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EmployeePosition", b =>
+                {
+                    b.HasOne("Domain.Entities.Employee", "Employee")
+                        .WithMany("EmployeePositions")
+                        .HasForeignKey("employee_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Position", "Position")
+                        .WithMany("EmployeePositions")
+                        .HasForeignKey("position_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Position");
+                });
+
             modelBuilder.Entity("Domain.Entities.Function", b =>
                 {
                     b.HasOne("Domain.Entities.Function", "parent")
@@ -997,6 +1332,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("TechnicalCategory");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Timesheet", b =>
+                {
+                    b.HasOne("Domain.Entities.Employee", "Employee")
+                        .WithMany("Timesheets")
+                        .HasForeignKey("employee_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("Domain.Entities.UserRole", b =>
                 {
                     b.HasOne("Domain.Entities.Role", "role")
@@ -1037,11 +1383,30 @@ namespace Infrastructure.Migrations
                     b.Navigation("cvTechInfos");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Department", b =>
+                {
+                    b.Navigation("EmployeeDepartments");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Employee", b =>
+                {
+                    b.Navigation("EmployeeDepartments");
+
+                    b.Navigation("EmployeePositions");
+
+                    b.Navigation("Timesheets");
+                });
+
             modelBuilder.Entity("Domain.Entities.Function", b =>
                 {
                     b.Navigation("childs");
 
                     b.Navigation("permissions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Position", b =>
+                {
+                    b.Navigation("EmployeePositions");
                 });
 
             modelBuilder.Entity("Domain.Entities.Role", b =>

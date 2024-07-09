@@ -1,5 +1,7 @@
 variables:
   IMAGE_TAG: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+  PROJECT_NAME: "webCV_be"
+  PORT_API: 57
 
 stages:
   - build

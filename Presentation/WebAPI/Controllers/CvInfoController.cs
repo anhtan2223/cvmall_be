@@ -69,12 +69,19 @@ namespace WebAPI.Controllers
         [Route("")]
         public async Task<IActionResult> Create([FromBody] CvInfoRequest request)
         {
-            int count = await cvInfoServices.Create(request);
+            try
+            {
+                int count = await cvInfoServices.Create(request);
 
-            if (count >= 1)
-                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001 ) });
-            else
-                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+                if (count >= 1)
+                    return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+                else
+                    return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_001) });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { code = ResponseCode.SystemError, message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -87,11 +94,18 @@ namespace WebAPI.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] CvInfoRequest request)
         {
-            var count = await cvInfoServices.Update(id, request);
-            if (count >= 1)
-                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_002) });
-            else
-                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_002) });
+            try
+            {
+                var count = await cvInfoServices.Update(id, request);
+                if (count >= 1)
+                    return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_002) });
+                else
+                    return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_002) });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { code = ResponseCode.SystemError, message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -109,6 +123,61 @@ namespace WebAPI.Controllers
                 return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_003) });
             else
                 return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_003) });
+        }
+
+        // <summary>
+        /// Export excel CV detail
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("{id}/export")]
+        public async Task<IActionResult> ExportExcelCVDetail(Guid id)
+        {
+            var fileName = $"CV_{id}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipCVDetail(id);
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
+        }
+
+        /// <summary>
+        /// Export excel CV template
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("export_template")]
+        public async Task<IActionResult> ExportExcelCVTemplate()
+        {
+            var fileName = $"CV_template.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipCVTemplate();
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
+        }
+
+        // <summary>
+        /// Export excel all CV
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("export_all")]
+        public async Task<IActionResult> ExportAndZipAllCVs()
+        {
+            var fileName = $"CVs_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.zip";
+
+            var fileData = await cvInfoServices.ExportAndZipAllCVs();
+
+            if (fileData == null)
+                return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+            return File(fileData, "application/octetstream", fileName);
         }
     }
 }
