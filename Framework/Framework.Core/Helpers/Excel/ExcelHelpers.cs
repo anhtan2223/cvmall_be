@@ -1623,7 +1623,10 @@ namespace Framework.Core.Helpers
                 foreach (var itemConfig in cellConfigs)
                 {
                     var propValue = propertyValues[itemConfig.key];
-                    propValue = (propValue != null) ? propValue : "";
+                    propValue ??= "";
+                    if(itemConfig.transformFunc != null) {
+                        propValue = itemConfig.transformFunc(propValue);
+                    }
                     Cell c = CreateCell(propValue.ToString(), itemConfig.type, false, true);
                     tRow.AppendChild(c);
                 }
@@ -1635,7 +1638,10 @@ namespace Framework.Core.Helpers
                 {
                     var itemProp = props.Where(x => x.Name == itemConfig.key).First();
                     var propValue = itemProp.GetValue(entity);
-                    propValue = (propValue != null) ? propValue : "";
+                    propValue ??= "";
+                    if(itemConfig.transformFunc != null) {
+                        propValue = itemConfig.transformFunc(propValue);
+                    }
                     Cell c = CreateCell(propValue.ToString(), itemConfig.type, false, true);
                     tRow.AppendChild(c);
                 }

@@ -3,6 +3,7 @@
     public class ExcelItem
     {
         public string key { get; set; }
+        public Func<object, object>? transformFunc { get; set; }
         public string header { get; set; }
         public double? width { get; set; }
         public DataType? type { get; set; } = DataType.TEXT;
