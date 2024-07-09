@@ -32,71 +32,9 @@ namespace Application.Core.Services.Core
 
         public async Task<PagedList<TimesheetResponse>> GetPaged(TimesheetRequestPaged request)
         {
-            var month = request.month != 0 ? request.month : DateTime.Now.Month;
-            var year = request.year != 0 ? request.year : DateTime.Now.Year;
-            var timesheetQuery = timesheetRepository
-                .GetQuery()
-                .ExcludeSoftDeleted()
-                .Where(x => x.month_year.Month == month && x.month_year.Year == year);
+            var query = GetListQuery(request);
 
-            var query = employeeRepository
-                .GetQuery()
-                .ExcludeSoftDeleted()
-                .Select(employee => new
-                {
-                    employee = employee,
-                    timesheet = timesheetQuery
-                        .Where(t => t.employee_id == employee.id)
-                        .Take(1)
-                        .FirstOrDefault()
-                })
-                .Select( x => new {
-                        employee_id = x.employee.id,
-                        branch = x.employee.branch,
-                        full_name = x.employee.full_name,
-                        initial_name = x.employee.initial_name,
-                        state = x.employee.state,
-                        employee_code = x.employee.employee_code,
-                        timesheet_id = (Guid?)(x.timesheet != null ? x.timesheet.id : null),
-                        group = x.timesheet != null ? x.timesheet.group : null,
-                        month_year = (DateTime?)(x.timesheet != null ? x.timesheet.month_year : null),
-                        project_participation_hours = x.timesheet != null ? x.timesheet.project_participation_hours : 0,
-                        consumed_hours = x.timesheet != null ? x.timesheet.consumed_hours : 0,
-                        late_early_departures = x.timesheet != null ? x.timesheet.late_early_departures : 0,
-                        absence_hours = x.timesheet != null ? x.timesheet.absence_hours : 0,
-                        Employee = x.employee,
-                        Timesheet = x.timesheet,
-                })
-                .Where(x => x.Employee.EmployeeDepartments == null ? false : x.Employee.EmployeeDepartments.Any(ed => ed.Department.name.Equals("Phòng dự án")))
-                .Where(x => string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search.ToLower()))
-                .SortBy(request.sort ?? "employee_id.asc");
-
-            if (!request.branchFilters.IsNullOrEmpty())
-            {
-                query = query.Where(x => request.branchFilters.Contains(x.branch));
-            }
-            if (!request.groupFilters.IsNullOrEmpty())
-            {
-                query = query.Where(x => request.groupFilters.Contains(x.group));
-            }
-            if (!request.stateFilters.IsNullOrEmpty())
-            {
-                query = query.Where(x => request.stateFilters.Contains(x.state));
-            }
-
-            var timesheetsQuery = query.Select( x => new Timesheet {
-                        id = x.Timesheet != null ? x.Timesheet.id : Guid.Empty,
-                        employee_id = x.Employee.id,
-                        group = x.Timesheet != null ? x.Timesheet.group : null,
-                        month_year = x.Timesheet != null ? x.Timesheet.month_year : new DateTime(year, month, 1),
-                        project_participation_hours = x.Timesheet != null ? x.Timesheet.project_participation_hours : null,
-                        consumed_hours = x.Timesheet != null ? x.Timesheet.consumed_hours : null,
-                        late_early_departures = x.Timesheet != null ? x.Timesheet.late_early_departures : null,
-                        absence_hours = x.Timesheet != null ? x.Timesheet.absence_hours : null,
-                        Employee = x.Employee,
-                });
-
-            var data = timesheetsQuery.ToPagedList(request.page, request.size);
+            var data = query.ToPagedList(request.page, request.size);
 
             var dataMapping = _mapper.Map<PagedList<TimesheetResponse>>(data);
 
@@ -177,6 +115,15 @@ namespace Application.Core.Services.Core
                             {
                                 throw new ArgumentException();
                             }
+                            var employee = await employeeRepository
+                            .GetQuery()
+                            .FindActiveById(request.employee_id)
+                            .FirstOrDefaultAsync();
+                            if (employee != null)
+                            {
+                                employee.current_group = request.group;
+                                await employeeRepository.UpdateEntityAsync(employee);
+                            }
 
                             var entity = _mapper.Map<Timesheet>(request);
 
@@ -240,9 +187,28 @@ namespace Application.Core.Services.Core
             return count;
         }
 
-        public async Task<byte[]> ExportAllExcelByMonthYear(int month, int year)
+        public async Task<byte[]> ExportAllExcel(TimesheetRequestPaged request)
         {
-            List<Timesheet> list = await GetListByMonthYear(month, year);
+            var query = GetListQuery(request);
+
+            var dataQuery = query.Select( x => new {
+                        id = x != null ? x.id : Guid.Empty,
+                        employee_id = x.Employee.id,
+                        branch = x.Employee.branch,
+                        full_name = x.Employee.full_name,
+                        initial_name = x.Employee.initial_name,
+                        state = x.Employee.state,
+                        employee_code = x.Employee.employee_code,
+                        timesheet_id = (Guid?)(x != null ? x.id : null),
+                        group = x != null ? x.group : null,
+                        month_year = (DateTime?)(x != null ? x.month_year : null),
+                        project_participation_hours = x != null ? x.project_participation_hours : 0,
+                        consumed_hours = x != null ? x.consumed_hours : 0,
+                        late_early_departures = x != null ? x.late_early_departures : 0,
+                        absence_hours = x != null ? x.absence_hours : 0,
+                });
+
+            var list = dataQuery.ToList();
 
             if (list == null)
                 return null;
@@ -256,10 +222,28 @@ namespace Application.Core.Services.Core
                     workbookpart?.CreateSheet("Sheet1");
 
                     List<ExcelItem> excelItems = new() {
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "TimesheetName"), key = "timesheet_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "FullName"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=30},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Email"), key = "mail", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Phone"), key = "phone", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "EmployeeCode"), key = "employee_code", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "FullName"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Initialname"), key = "initial_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Branch"), key = "branch", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Group"), key = "group", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "State"), key = "state", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15, 
+                        transformFunc = (object state) => {
+                            int intState = (int)state;
+                            if(intState  < 0 || intState > 3)
+                                return "";
+                            var map = new[]{
+                                "Đang làm việc",
+                                "Đang thử việc",
+                                "Đang thực tập",
+                                "Đã nghỉ việc ",
+                            };
+                            return map[intState];
+                        }},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ProjectParticipationHours"), key = "project_participation_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ConsumedHours"), key = "consumed_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "LateEarlyDepartures"), key = "late_early_departures", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
+                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "AbsenceHours"), key = "absence_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
                     };
 
                     workbookpart?.FillGridData(list, excelItems);
@@ -271,21 +255,76 @@ namespace Application.Core.Services.Core
 
         #region private
 
-
-        private async Task<List<Timesheet>> GetListByMonthYear(int month, int year)
+        private IQueryable<Timesheet> GetListQuery(TimesheetRequestPaged request)
         {
-            var data = timesheetRepository
+            var month = request.month != 0 ? request.month : DateTime.Now.Month;
+            var year = request.year != 0 ? request.year : DateTime.Now.Year;
+            var timesheetQuery = timesheetRepository
                 .GetQuery()
                 .ExcludeSoftDeleted()
-                .Where(x => x.month_year.Month == month && x.month_year.Year == year)
-                .SortBy("employee_id.desc")
-                .Take(9999)
-                .ToList();
+                .Where(x => x.month_year.Month == month && x.month_year.Year == year);
 
-            var dataMapping = new List<TimesheetResponse>();
+            var query = employeeRepository
+                .GetQuery()
+                .ExcludeSoftDeleted()
+                .Select(employee => new
+                {
+                    Employee = employee,
+                    Timesheet = timesheetQuery
+                        .Where(t => t.employee_id == employee.id)
+                        .Take(1)
+                        .FirstOrDefault()
+                })
+                .Select( x => new {
+                        id = x.Timesheet != null ? x.Timesheet.id : Guid.Empty,
+                        employee_id = x.Employee.id,
+                        branch = x.Employee.branch,
+                        full_name = x.Employee.full_name,
+                        initial_name = x.Employee.initial_name,
+                        state = x.Employee.state,
+                        employee_code = x.Employee.employee_code,
+                        timesheet_id = (Guid?)(x.Timesheet != null ? x.Timesheet.id : null),
+                        group = x.Timesheet != null ? x.Timesheet.group : null,
+                        month_year = (DateTime?)(x.Timesheet != null ? x.Timesheet.month_year : null),
+                        project_participation_hours = x.Timesheet != null ? x.Timesheet.project_participation_hours : 0,
+                        consumed_hours = x.Timesheet != null ? x.Timesheet.consumed_hours : 0,
+                        late_early_departures = x.Timesheet != null ? x.Timesheet.late_early_departures : 0,
+                        absence_hours = x.Timesheet != null ? x.Timesheet.absence_hours : 0,
+                        Employee = x.Employee,
+                        Timesheet = x.Timesheet,
+                })
+                .Where(x => x.Employee.EmployeeDepartments == null ? false : x.Employee.EmployeeDepartments.Any(ed => ed.Department.name.Equals("Phòng dự án")))
+                .Where(x => string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search.ToLower()))
+                .SortBy(request.sort ?? "employee_id.asc");
 
-            return data;
+            if (!request.branchFilters.IsNullOrEmpty())
+            {
+                query = query.Where(x => request.branchFilters.Contains(x.branch));
+            }
+            if (!request.groupFilters.IsNullOrEmpty())
+            {
+                query = query.Where(x => request.groupFilters.Contains(x.group));
+            }
+            if (!request.stateFilters.IsNullOrEmpty())
+            {
+                query = query.Where(x => request.stateFilters.Contains(x.state));
+            }
+
+            var timesheetsQuery = query.Select( x => new Timesheet {
+                        id = x.Timesheet != null ? x.Timesheet.id : Guid.Empty,
+                        employee_id = x.Employee.id,
+                        group = x.Timesheet != null ? x.Timesheet.group : null,
+                        month_year = x.Timesheet != null ? x.Timesheet.month_year : new DateTime(year, month, 1),
+                        project_participation_hours = x.Timesheet != null ? x.Timesheet.project_participation_hours : null,
+                        consumed_hours = x.Timesheet != null ? x.Timesheet.consumed_hours : null,
+                        late_early_departures = x.Timesheet != null ? x.Timesheet.late_early_departures : null,
+                        absence_hours = x.Timesheet != null ? x.Timesheet.absence_hours : null,
+                        Employee = x.Employee,
+                });
+
+            return timesheetsQuery;
         }
+        
         #endregion
     }
 }

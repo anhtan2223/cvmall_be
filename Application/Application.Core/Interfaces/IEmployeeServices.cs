@@ -15,5 +15,7 @@ namespace Application.Core.Interfaces.Core
         Task<int> Update(Guid id, EmployeeRequest request);
         Task<int> Delete(Guid id);
         Task<IList<EmployeeResponse>> GetGroups();
+        Task<byte[]> ExportAllExcel();
+        Task<byte[]> ExportTemplateExcel();
     }
 }

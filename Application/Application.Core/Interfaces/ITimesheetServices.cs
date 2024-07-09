@@ -13,6 +13,6 @@ namespace Application.Core.Interfaces.Core
         // Task<int> Update(Guid id, TimesheetRequest request);
         Task<int> UpdateMulti(List<TimesheetRequest> requestList);
         // Task<int> Delete(Guid id);
-        Task<byte[]> ExportAllExcelByMonthYear( int month, int year);
+        Task<byte[]> ExportAllExcel(TimesheetRequestPaged request);
     }
 }

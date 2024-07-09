@@ -157,11 +157,14 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("export-all-excel-by-month-year")]
-        public async Task<IActionResult> ExportAllExcelByMonthYear([FromQuery] int month, int year)
+        public async Task<IActionResult> ExportAllExcel([FromQuery] TimesheetRequestPaged request)
         {
-            var fileName = $"User_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx";
+            var month = request.month != 0 ? request.month : DateTime.Now.Month;
+            var year = request.year != 0 ? request.year : DateTime.Now.Year;
 
-            var fileData = await timesheetServices.ExportAllExcelByMonthYear(month, year);
+            var fileName = $"timesheet_{month}_{year}_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx";
+
+            var fileData = await timesheetServices.ExportAllExcel(request);
 
             if (fileData == null)
                 return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });

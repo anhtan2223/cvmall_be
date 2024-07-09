@@ -122,6 +122,46 @@ namespace WebAPI.Controllers
             var data = await _employeeServices.GetGroups();
             return Ok(data);
         }
+        
+        // /// <summary>
+        // /// Export all excel
+        // /// </summary>
+        // /// <param name="request"></param>
+        // /// <returns></returns>
+        // [HttpGet]
+        // [Route("export-all-excel")]
+        // public async Task<IActionResult> ExportAllExcel([FromQuery] RequestEmployeePaged request)
+        // {
+        //     var fileName = $"employees_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx";
+
+        //     var fileData = await _employeeServices.ExportAllExcel();
+
+        //     if (fileData == null)
+        //         return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+        //     return File(fileData, "application/octetstream", fileName);
+
+        // }
+        
+        // /// <summary>
+        // /// Export template excel
+        // /// </summary>
+        // /// <param name="request"></param>
+        // /// <returns></returns>
+        // [HttpGet]
+        // [Route("export-template-excel")]
+        // public async Task<IActionResult> ExportTemplateExcel()
+        // {
+        //     var fileName = $"template_{DateTimeExtensions.ToDateTimeStampString(DateTime.Now)}.xlsx";
+
+        //     var fileData = await _employeeServices.ExportTemplateExcel();
+
+        //     if (fileData == null)
+        //         return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
+
+        //     return File(fileData, "application/octetstream", fileName);
+
+        // }
     }
 }
 
