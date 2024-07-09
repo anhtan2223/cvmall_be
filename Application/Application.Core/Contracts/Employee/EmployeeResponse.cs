@@ -40,6 +40,6 @@ namespace Application.Core.Contracts
 
         public List<EmployeePositionResponse>? EmployeePositions { get; set; }
         public List<EmployeeDepartmentResponse>? EmployeeDepartments { get; set; }
-        public List<Timesheet>? Timesheets {get; set;}
+        // public List<Timesheet>? Timesheets {get; set;}
     }
 }
