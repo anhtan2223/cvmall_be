@@ -21,6 +21,7 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<Employee> employeeRepository;
         private ILocalizeServices ls { get; set; }
+        private string _templatePath = "../../Presentation/WebAPI/Assets/Employee/Employee_Template.xlsx";
 
 
         public EmployeeServices(IUnitOfWork _unitOfWork, IMapper _mapper, ILocalizeServices _ls) : base(_unitOfWork, _mapper)
@@ -46,7 +47,7 @@ namespace Application.Core.Services.Core
                         .ThenInclude(ep => ep.Position)
                     .Include(x => x.EmployeeDepartments)
                         .ThenInclude(ep => ep.Department)
-                    .Include(x => x.Timesheets)
+                    //.Include(x => x.Timesheets)
                     .ToPagedListAsync(request.page, request.size);
 
             foreach (var employee in data.data)
@@ -86,7 +87,7 @@ namespace Application.Core.Services.Core
                                         .ThenInclude(ep => ep.Position)
                                     .Include(x => x.EmployeeDepartments)
                                         .ThenInclude(ep => ep.Department)
-                                    .Include(x => x.Timesheets)
+                                    //.Include(x => x.Timesheets)
                                     .FilterById(id)
                                     .FirstOrDefault();
 
@@ -265,39 +266,51 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                using (SpreadsheetDocument document = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
+                await AddFileToMemoryStream(ms, _templatePath);
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
-                    document.CreateWorkbookPart();
+                    string[] states = { "Đang làm việc", "Đang thử việc", "Đang thực tập", "Đã nghỉ việc" };
+                    
+
                     WorkbookPart? workbookpart = document.WorkbookPart;
-                    workbookpart?.CreateSheet("Sheet1");
+                    foreach(var (employee, index) in list.data.Select((item, index) => (item, index)))
+                    {   
+                        int row = index + 2;
 
-                    List<ExcelItem> excelItems = new() {
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "EmployeeCode"), key = "employee_code", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "FullName"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Initialname"), key = "initial_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Branch"), key = "branch", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Group"), key = "group", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "State"), key = "state", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15,
-                        transformFunc = (object state) => {
-                            int intState = (int)state;
-                            if(intState  < 0 || intState > 3)
-                                return "";
-                            var map = new[]{
-                                "Đang làm việc",
-                                "Đang thử việc",
-                                "Đang thực tập",
-                                "Đã nghỉ việc ",
-                            };
-                            return map[intState];
-                        }},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ProjectParticipationHours"), key = "project_participation_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ConsumedHours"), key = "consumed_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "LateEarlyDepartures"), key = "late_early_departures", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "AbsenceHours"), key = "absence_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                    };
+                        List<string> departments = new List<string>();
+                        List<string> positions = new List<string>();
+                        
+                        foreach (var eDepartment in employee.EmployeeDepartments)
+                        {
+                            Console.WriteLine($"{employee.full_name}");
+                            Console.WriteLine(eDepartment.id.ToString());
+                            departments.Add(eDepartment.department.name);
+                        }
 
-                    workbookpart?.FillGridData(list, excelItems);
+                        foreach(var ePosition in employee.EmployeePositions)
+                        {
+                            positions.Add(ePosition.position.name);
+                        }
 
+                        workbookpart?.InsertCell($"A{row}", $"{index + 1}", DataType.NUMBER);
+                        workbookpart?.InsertCell($"B{row}", $"{employee.employee_code}", DataType.TEXT);
+                        workbookpart?.InsertCell($"C{row}", $"{employee.full_name}", DataType.TEXT);
+                        workbookpart?.InsertCell($"D{row}", $"{employee.initial_name}", DataType.TEXT);
+                        workbookpart?.InsertCell($"E{row}", $"{employee.branch}", DataType.TEXT);
+                        workbookpart?.InsertCell($"F{row}", $"{String.Join(", ", departments.ToArray())}", DataType.TEXT);
+                        workbookpart?.InsertCell($"G{row}", $"{String.Join(", ", positions.ToArray())}", DataType.TEXT);
+                        workbookpart?.InsertCell($"H{row}", $"{states[employee.state]}", DataType.TEXT);
+                        workbookpart?.InsertCell($"I{row}", $"{employee.phone}\u200B", DataType.TEXT);
+                        workbookpart?.InsertCell($"J{row}", $"{employee.company_email}", DataType.TEXT);
+                        workbookpart?.InsertCell($"K{row}", $"{employee.personal_email}", DataType.TEXT);
+                        workbookpart?.InsertCell($"L{row}", $"{employee.birthday.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        workbookpart?.InsertCell($"M{row}", $"{employee.permanent_address}", DataType.TEXT);
+                        workbookpart?.InsertCell($"N{row}", $"{employee.current_address}", DataType.TEXT);
+                        workbookpart?.InsertCell($"O{row}", $"{employee.id_number}\u200B", DataType.TEXT);
+                        workbookpart?.InsertCell($"P{row}", $"{employee.date_issue?.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        workbookpart?.InsertCell($"Q{row}", $"{employee.location_issue}", DataType.TEXT);
+                        workbookpart?.InsertCell($"R{row}", $"{(employee.is_married ? "Đã kết hôn" : "Độc thân")}", DataType.TEXT);
+                    }
                 }
                 return ms.ToArray();
             }
@@ -305,42 +318,9 @@ namespace Application.Core.Services.Core
 
         public async Task<byte[]> ExportTemplateExcel()
         {
-
-            var list = await GetAll();
-
-            if (list == null)
-                return null;
-
             using (var ms = new MemoryStream())
             {
-                using (SpreadsheetDocument document = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
-                {
-                    document.CreateWorkbookPart();
-                    WorkbookPart? workbookpart = document.WorkbookPart;
-                    workbookpart?.CreateSheet("Sheet1");
-
-                    List<ExcelItem> excelItems = new() {
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "employee_code"), key = "employee_code", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "branch"), key = "branch", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "full_name"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "initial_name"), key = "initial_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "current_group"), key = "current_group", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "state"), key = "state", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "company_email"), key = "company_email", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "personal_email"), key = "personal_email", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "phone"), key = "phone", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "birthday"), key = "birthday", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "permanent_address"), key = "permanent_address", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "current_address"), key = "current_address", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "id_number"), key = "id_number", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "date_issue"), key = "date_issue", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "location_issue"), key = "location_issue", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "is_married"), key = "is_married", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                    };
-
-                    workbookpart?.FillGridData(list, excelItems);
-
-                }
+                await AddFileToMemoryStream(ms, _templatePath);
                 return ms.ToArray();
             }
         }
@@ -349,15 +329,25 @@ namespace Application.Core.Services.Core
         #region private
 
 
-        private async Task<List<Employee>> GetAll()
+        private async Task<PagedList<EmployeeResponse>> GetAll()
         {
-            var data = employeeRepository
-                .GetQuery()
-                .ExcludeSoftDeleted()
-                .Take(9999)
-                .ToList();
+            RequestEmployeePaged req = new RequestEmployeePaged() { 
+                sort = "employee_code.asc",
+                size = 9999
+            };
+
+            var data = await GetPaged(req);
 
             return data;
+        }
+
+        private async Task AddFileToMemoryStream(MemoryStream ms, string filePath)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                fileStream.CopyTo(ms);
+                ms.Position = 0;
+            }
         }
 
         #endregion
