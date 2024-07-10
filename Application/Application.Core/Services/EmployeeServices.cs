@@ -282,8 +282,6 @@ namespace Application.Core.Services.Core
                         
                         foreach (var eDepartment in employee.EmployeeDepartments)
                         {
-                            Console.WriteLine($"{employee.full_name}");
-                            Console.WriteLine(eDepartment.id.ToString());
                             departments.Add(eDepartment.department.name);
                         }
 
@@ -293,23 +291,23 @@ namespace Application.Core.Services.Core
                         }
 
                         workbookpart?.InsertCell($"A{row}", $"{index + 1}", DataType.NUMBER);
-                        workbookpart?.InsertCell($"B{row}", $"{employee.employee_code}", DataType.TEXT);
-                        workbookpart?.InsertCell($"C{row}", $"{employee.full_name}", DataType.TEXT);
-                        workbookpart?.InsertCell($"D{row}", $"{employee.initial_name}", DataType.TEXT);
-                        workbookpart?.InsertCell($"E{row}", $"{employee.branch}", DataType.TEXT);
-                        workbookpart?.InsertCell($"F{row}", $"{String.Join(", ", departments.ToArray())}", DataType.TEXT);
-                        workbookpart?.InsertCell($"G{row}", $"{String.Join(", ", positions.ToArray())}", DataType.TEXT);
-                        workbookpart?.InsertCell($"H{row}", $"{states[employee.state]}", DataType.TEXT);
-                        workbookpart?.InsertCell($"I{row}", $"{employee.phone}\u200B", DataType.TEXT);
-                        workbookpart?.InsertCell($"J{row}", $"{employee.company_email}", DataType.TEXT);
-                        workbookpart?.InsertCell($"K{row}", $"{employee.personal_email}", DataType.TEXT);
-                        workbookpart?.InsertCell($"L{row}", $"{employee.birthday.ToString("dd/MM/yyyy")}", DataType.TEXT);
-                        workbookpart?.InsertCell($"M{row}", $"{employee.permanent_address}", DataType.TEXT);
-                        workbookpart?.InsertCell($"N{row}", $"{employee.current_address}", DataType.TEXT);
-                        workbookpart?.InsertCell($"O{row}", $"{employee.id_number}\u200B", DataType.TEXT);
-                        workbookpart?.InsertCell($"P{row}", $"{employee.date_issue?.ToString("dd/MM/yyyy")}", DataType.TEXT);
-                        workbookpart?.InsertCell($"Q{row}", $"{employee.location_issue}", DataType.TEXT);
-                        workbookpart?.InsertCell($"R{row}", $"{(employee.is_married ? "Đã kết hôn" : "Độc thân")}", DataType.TEXT);
+                        if (employee.employee_code != null) workbookpart?.InsertCell($"B{row}", $"{employee.employee_code}", DataType.TEXT);
+                        if (employee.full_name != null) workbookpart?.InsertCell($"C{row}", $"{employee.full_name}", DataType.TEXT);
+                        if (employee.initial_name != null) workbookpart?.InsertCell($"D{row}", $"{employee.initial_name}", DataType.TEXT);
+                        if (employee.branch != null) workbookpart?.InsertCell($"E{row}", $"{employee.branch}", DataType.TEXT);
+                        if (departments.Count() > 0) workbookpart?.InsertCell($"F{row}", $"{String.Join(", ", departments.ToArray())}", DataType.TEXT);
+                        if (positions.Count() > 0) workbookpart?.InsertCell($"G{row}", $"{String.Join(", ", positions.ToArray())}", DataType.TEXT);
+                        if (employee.state != null) workbookpart?.InsertCell($"H{row}", $"{states[employee.state]}", DataType.TEXT);
+                        if (employee.phone != null) workbookpart?.InsertCell($"I{row}", $"{employee.phone}", DataType.TEXT);
+                        if (employee.company_email != null) workbookpart?.InsertCell($"J{row}", $"{employee.company_email}", DataType.TEXT);
+                        if (employee.personal_email != null) workbookpart?.InsertCell($"K{row}", $"{employee.personal_email}", DataType.TEXT);
+                        if (employee.birthday != null) workbookpart?.InsertCell($"L{row}", $"{employee.birthday.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        if (employee.permanent_address != null) workbookpart?.InsertCell($"M{row}", $"{employee.permanent_address}", DataType.TEXT);
+                        if (employee.current_address != null) workbookpart?.InsertCell($"N{row}", $"{employee.current_address}", DataType.TEXT);
+                        if (employee.id_number != null) workbookpart?.InsertCell($"O{row}", $"{employee.id_number}", DataType.TEXT);
+                        if (employee.date_issue != null) workbookpart?.InsertCell($"P{row}", $"{employee.date_issue?.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        if (employee.location_issue != null) workbookpart?.InsertCell($"Q{row}", $"{employee.location_issue}", DataType.TEXT);
+                        if (employee.is_married  != null) workbookpart?.InsertCell($"R{row}", $"{(employee.is_married ? "Đã kết hôn" : "Độc thân")}", DataType.TEXT);
                     }
                 }
                 return ms.ToArray();
