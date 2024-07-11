@@ -9,6 +9,10 @@ using Application.Core.Interfaces.Core;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Http;
+using System.Globalization;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
 using Framework.Core.Helpers;
 using Framework.Core.Helpers.Excel;
@@ -21,6 +25,7 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<Employee> employeeRepository;
         private ILocalizeServices ls { get; set; }
+        private string _templatePath = "../../Presentation/WebAPI/Assets/Employee/Employee_Template.xlsx";
 
 
         public EmployeeServices(IUnitOfWork _unitOfWork, IMapper _mapper, ILocalizeServices _ls) : base(_unitOfWork, _mapper)
@@ -46,7 +51,7 @@ namespace Application.Core.Services.Core
                         .ThenInclude(ep => ep.Position)
                     .Include(x => x.EmployeeDepartments)
                         .ThenInclude(ep => ep.Department)
-                    .Include(x => x.Timesheets)
+                    //.Include(x => x.Timesheets)
                     .ToPagedListAsync(request.page, request.size);
 
             foreach (var employee in data.data)
@@ -86,7 +91,7 @@ namespace Application.Core.Services.Core
                                         .ThenInclude(ep => ep.Position)
                                     .Include(x => x.EmployeeDepartments)
                                         .ThenInclude(ep => ep.Department)
-                                    .Include(x => x.Timesheets)
+                                    //.Include(x => x.Timesheets)
                                     .FilterById(id)
                                     .FirstOrDefault();
 
@@ -253,8 +258,6 @@ namespace Application.Core.Services.Core
 
             return dataMapping;
         }
-
-
         public async Task<byte[]> ExportAllExcel()
         {
 
@@ -265,39 +268,49 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                using (SpreadsheetDocument document = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
+                await AddFileToMemoryStream(ms, _templatePath);
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
-                    document.CreateWorkbookPart();
+                    string[] states = { "Đang làm việc", "Đang thử việc", "Đang thực tập", "Đã nghỉ việc" };
+                    
+
                     WorkbookPart? workbookpart = document.WorkbookPart;
-                    workbookpart?.CreateSheet("Sheet1");
+                    foreach(var (employee, index) in list.data.Select((item, index) => (item, index)))
+                    {   
+                        int row = index + 2;
 
-                    List<ExcelItem> excelItems = new() {
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "EmployeeCode"), key = "employee_code", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "FullName"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Initialname"), key = "initial_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Branch"), key = "branch", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "Group"), key = "group", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "State"), key = "state", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15,
-                        transformFunc = (object state) => {
-                            int intState = (int)state;
-                            if(intState  < 0 || intState > 3)
-                                return "";
-                            var map = new[]{
-                                "Đang làm việc",
-                                "Đang thử việc",
-                                "Đang thực tập",
-                                "Đã nghỉ việc ",
-                            };
-                            return map[intState];
-                        }},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ProjectParticipationHours"), key = "project_participation_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "ConsumedHours"), key = "consumed_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "LateEarlyDepartures"), key = "late_early_departures", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "AbsenceHours"), key = "absence_hours", type = DataType.NUMBER, header_align = CellAlign.CENTER, content_align = CellAlign.CENTER ,width=15},
-                    };
+                        List<string> departments = new List<string>();
+                        List<string> positions = new List<string>();
+                        
+                        foreach (var eDepartment in employee.EmployeeDepartments)
+                        {
+                            departments.Add(eDepartment.department.name);
+                        }
 
-                    workbookpart?.FillGridData(list, excelItems);
+                        foreach(var ePosition in employee.EmployeePositions)
+                        {
+                            positions.Add(ePosition.position.name);
+                        }
 
+                        workbookpart?.InsertCell($"A{row}", $"{index + 1}", DataType.NUMBER);
+                        if (employee.employee_code != null) workbookpart?.InsertCell($"B{row}", $"{employee.employee_code}", DataType.TEXT);
+                        if (employee.full_name != null) workbookpart?.InsertCell($"C{row}", $"{employee.full_name}", DataType.TEXT);
+                        if (employee.initial_name != null) workbookpart?.InsertCell($"D{row}", $"{employee.initial_name}", DataType.TEXT);
+                        if (employee.branch != null) workbookpart?.InsertCell($"E{row}", $"{employee.branch}", DataType.TEXT);
+                        if (departments.Count() > 0) workbookpart?.InsertCell($"F{row}", $"{String.Join(", ", departments.ToArray())}", DataType.TEXT);
+                        if (positions.Count() > 0) workbookpart?.InsertCell($"G{row}", $"{String.Join(", ", positions.ToArray())}", DataType.TEXT);
+                        if (employee.state != null) workbookpart?.InsertCell($"H{row}", $"{states[employee.state]}", DataType.TEXT);
+                        if (employee.phone != null) workbookpart?.InsertCell($"I{row}", $"{employee.phone}", DataType.TEXT);
+                        if (employee.company_email != null) workbookpart?.InsertCell($"J{row}", $"{employee.company_email}", DataType.TEXT);
+                        if (employee.personal_email != null) workbookpart?.InsertCell($"K{row}", $"{employee.personal_email}", DataType.TEXT);
+                        if (employee.birthday != null) workbookpart?.InsertCell($"L{row}", $"{employee.birthday.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        if (employee.permanent_address != null) workbookpart?.InsertCell($"M{row}", $"{employee.permanent_address}", DataType.TEXT);
+                        if (employee.current_address != null) workbookpart?.InsertCell($"N{row}", $"{employee.current_address}", DataType.TEXT);
+                        if (employee.id_number != null) workbookpart?.InsertCell($"O{row}", $"{employee.id_number}", DataType.TEXT);
+                        if (employee.date_issue != null) workbookpart?.InsertCell($"P{row}", $"{employee.date_issue?.ToString("dd/MM/yyyy")}", DataType.TEXT);
+                        if (employee.location_issue != null) workbookpart?.InsertCell($"Q{row}", $"{employee.location_issue}", DataType.TEXT);
+                        if (employee.is_married  != null) workbookpart?.InsertCell($"R{row}", $"{(employee.is_married ? "Đã kết hôn" : "Độc thân")}", DataType.TEXT);
+                    }
                 }
                 return ms.ToArray();
             }
@@ -305,42 +318,9 @@ namespace Application.Core.Services.Core
 
         public async Task<byte[]> ExportTemplateExcel()
         {
-
-            var list = await GetAll();
-
-            if (list == null)
-                return null;
-
             using (var ms = new MemoryStream())
             {
-                using (SpreadsheetDocument document = SpreadsheetDocument.Create(ms, SpreadsheetDocumentType.Workbook))
-                {
-                    document.CreateWorkbookPart();
-                    WorkbookPart? workbookpart = document.WorkbookPart;
-                    workbookpart?.CreateSheet("Sheet1");
-
-                    List<ExcelItem> excelItems = new() {
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "employee_code"), key = "employee_code", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "branch"), key = "branch", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "full_name"), key = "full_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "initial_name"), key = "initial_name", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "current_group"), key = "current_group", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "state"), key = "state", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "company_email"), key = "company_email", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "personal_email"), key = "personal_email", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "phone"), key = "phone", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "birthday"), key = "birthday", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "permanent_address"), key = "permanent_address", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "current_address"), key = "current_address", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "id_number"), key = "id_number", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "date_issue"), key = "date_issue", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "location_issue"), key = "location_issue", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                        new ExcelItem(){ header =  ls.Get(Modules.Core, Screen.Timesheet, "is_married"), key = "is_married", type = DataType.TEXT, header_align = CellAlign.CENTER, content_align = CellAlign.LEFT ,width=15},
-                    };
-
-                    workbookpart?.FillGridData(list, excelItems);
-
-                }
+                await AddFileToMemoryStream(ms, _templatePath);
                 return ms.ToArray();
             }
         }
@@ -349,17 +329,188 @@ namespace Application.Core.Services.Core
         #region private
 
 
-        private async Task<List<Employee>> GetAll()
+        private async Task<PagedList<EmployeeResponse>> GetAll()
         {
-            var data = employeeRepository
-                .GetQuery()
-                .ExcludeSoftDeleted()
-                .Take(9999)
-                .ToList();
+            RequestEmployeePaged req = new RequestEmployeePaged() { 
+                sort = "employee_code.asc",
+                size = 9999
+            };
+
+            var data = await GetPaged(req);
 
             return data;
         }
 
+        private async Task AddFileToMemoryStream(MemoryStream ms, string filePath)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                fileStream.CopyTo(ms);
+                ms.Position = 0;
+            }
+        }
+
         #endregion
+        public async Task<int> Import(IFormFile file)
+        {
+            var count = 0;
+            using (var transaction = await _unitOfWork.BeginTransactionAsync())
+            {
+                try
+                {
+                    Dictionary<string, int> stateMappings = new Dictionary<string, int>
+                    {
+                        { "Đang làm việc", 0 },
+                        { "Đang thử việc", 1 },
+                        { "Đang thực tập", 2 },
+                        { "Đã nghỉ việc", 3 }
+                    };
+                    Dictionary<string, bool> marriedMappings = new Dictionary<string, bool>
+                    {
+                        { "Độc thân", false },
+                        { "Đã kết hôn", true }
+                    };
+                    string pattern = @"^VHEC-\d+$";
+                    Regex regex = new Regex(pattern);
+                    List<List<string>> excelData = ReadExcelData(file);
+                    // List<EmployeeRequest> listE = new List<EmployeeRequest>() ;
+                    foreach (var employee in excelData)
+                    {
+                        if(!int.TryParse(employee[0] , out count))
+                            continue ;
+                        foreach (var item in new List<int>{1,2,3,4,7,11})
+                        {
+                            if(employee[item] == null)
+                                throw new ArgumentException();
+                        }
+                        if(!stateMappings.ContainsKey(employee[7]))
+                            throw new ArgumentException();
+                        if(!marriedMappings.ContainsKey(employee[17]))
+                            throw new ArgumentException();
+                        
+                        var request = new EmployeeRequest{
+                            employee_code       = employee[1] ,
+                            full_name           = employee[2] ,
+                            initial_name        = employee[3] ,
+                            branch              = employee[4] ,
+                            current_group       = ""          ,
+                            EmployeeDepartments = (employee[5] == null) ? null : GetDepartmentFromString(employee[5]) ,
+                            EmployeePositions   = (employee[6] == null) ? null : GetPositionFromString(employee[6]) ,
+                            state               = stateMappings[employee[7]] ,
+                            phone               = employee[8] ,
+                            company_email       = employee[9] ,
+                            personal_email      = employee[10] ,
+                            birthday            = StringToDateTime(employee[11]) ,
+                            permanent_address   = employee[12] ,
+                            current_address     = employee[13] ,
+                            id_number           = employee[14] ,
+                            date_issue          = (employee[15] == null) ? null : StringToDateTime(employee[15]) ,
+                            location_issue      = employee[16] ,
+                            is_married          = marriedMappings[employee[17]]
+                        };
+
+                        var isValidEmployeeCode = !await employeeRepository
+                                                    .GetQuery()
+                                                    .AnyAsync(x => x.employee_code == request.employee_code);
+                                                    
+                        if(!isValidEmployeeCode || !regex.IsMatch(request.employee_code))
+                            throw new ArgumentException();
+
+                        var Employee = _mapper.Map<Employee>(request);
+                        await employeeRepository.AddEntityAsync(Employee) ;
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    
+                    transaction.Commit();
+                    count = 0 ;
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                }
+            }
+            return count ;
+        }
+        private DateTime StringToDateTime(string input)
+        {
+            long dateType ;
+            if(long.TryParse(input ,out dateType))
+                return new DateTime(1900,1,1).AddDays(dateType - 2);
+
+           return DateTime.ParseExact(input,"dd/MM/yyyy",CultureInfo.InvariantCulture);
+        }
+        private List<EmployeePositionRequest> GetPositionFromString(string input)
+        {
+            var result = new List<EmployeePositionRequest>() ;
+            var list  = input.Split(",");
+            var position = _unitOfWork
+                                .GetRepository<Position>()
+                                .GetQuery()
+                                .ExcludeSoftDeleted()
+                                .Where(x => list.Contains(x.name));
+            foreach (var p in position)
+            {
+                result.Add(new EmployeePositionRequest{
+                    position_id = p.id 
+                });
+            }
+            return result ;
+        }
+        private List<EmployeeDepartmentRequest> GetDepartmentFromString(string input)
+        {
+            var result = new List<EmployeeDepartmentRequest>() ;
+            var list  = input.Split(",");
+            var department = _unitOfWork
+                                .GetRepository<Department>()
+                                .GetQuery()
+                                .ExcludeSoftDeleted()
+                                .Where(x => list.Contains(x.name));
+            foreach (var d in department)
+            {
+                result.Add(new EmployeeDepartmentRequest{
+                    department_id = d.id 
+                });
+            }
+            return result ;
+        }
+        private List<List<string>> ReadExcelData(IFormFile file)
+        {
+            List<List<string>> data = new List<List<string>>();
+
+            using (var stream = new MemoryStream())
+            {
+                file.CopyTo(stream);
+                stream.Position = 0;
+
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(stream, false))
+                {
+                    WorkbookPart workbookPart = document.WorkbookPart;
+                    WorksheetPart worksheetPart = workbookPart.WorksheetParts.First();
+                    SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+
+                    foreach (Row row in sheetData.Elements<Row>())
+                    {
+                        List<string> rowData = new List<string>();
+                        foreach (Cell cell in row.Elements<Cell>())
+                        {
+                            rowData.Add(GetCellValue(document, cell));
+                        }
+                        data.Add(rowData);
+                    }
+                }
+            }
+            return data;
+        }
+        private string GetCellValue(SpreadsheetDocument document, Cell cell)
+        {
+            string value = cell.CellValue?.InnerText;
+
+            if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+            {
+                return document.WorkbookPart.SharedStringTablePart.SharedStringTable
+                    .Elements<SharedStringItem>().ElementAt(int.Parse(value)).InnerText;
+            }
+            return value;
+        }
     }
 }
