@@ -328,13 +328,17 @@ namespace Framework.Core.Helpers
             {
                 Cell cell = GetCellByAddress(workbookpart, cellReference);
                 cell.CellValue = new CellValue(value);
-                if (double.TryParse(value, out _))
+                switch (dataType)
                 {
-                    cell.DataType = CellValues.Number;
-                }
-                else
-                {
-                    cell.DataType = CellValues.String;
+                    case DataType.NUMBER:
+                        cell.DataType = CellValues.Number;
+                        break;
+                    case DataType.DATE:
+                        cell.DataType = CellValues.Date;
+                        break;
+                    default:
+                        cell.DataType = CellValues.String;
+                        break;
                 }
                 if (replaceStyle)
                 {

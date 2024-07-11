@@ -1,6 +1,7 @@
 ﻿using Framework.Core.Collections;
 using Application.Core.Contracts;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Core.Interfaces.Core
 {
@@ -17,5 +18,6 @@ namespace Application.Core.Interfaces.Core
         Task<IList<EmployeeResponse>> GetGroups();
         Task<byte[]> ExportAllExcel();
         Task<byte[]> ExportTemplateExcel();
+        Task<int> Import(IFormFile file);
     }
 }
