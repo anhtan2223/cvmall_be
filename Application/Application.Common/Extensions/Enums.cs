@@ -27,24 +27,24 @@
 
     public class MessageKey
     {
-        public static string I_001 = "I_001";
-        public static string I_002 = "I_002";
-        public static string I_003 = "I_003";
+        public static string I_001 = "Information processed successfully.";
+        public static string I_002 = "Information saved.";
+        public static string I_003 = "Request accepted.";
 
-        public static string E_001 = "E_001";
-        public static string E_002 = "E_002";
-        public static string E_003 = "E_003";
-        public static string E_004 = "E_004";
-        public static string E_005 = "E_005";
-        public static string E_007 = "E_007";
-        public static string E_008 = "E_008";
-        public static string E_009 = "E_009";
-        public static string E_010 = "E_010";
+        public static string E_001 = "Error occurred.";
+        public static string E_002 = "Invalid input.";
+        public static string E_003 = "Operation failed.";
+        public static string E_004 = "Resource not found.";
+        public static string E_005 = "Access denied.";
+        public static string E_007 = "Database error.";
+        public static string E_008 = "Network error.";
+        public static string E_009 = "Timeout error.";
+        public static string E_010 = "Unknown error.";
 
-        public static string BE_003 = "BE_003";
+        public static string BE_003 = "Unable to connect.";
 
-        public static string W_001 = "W_001";
-        public static string W_002 = "W_002";
+        public static string W_001 = "Warning: Check your input.";
+        public static string W_002 = "Warning: Action might not be reversible.";
 
         //Success
         public const string S_CREATE = "S_CREATE";
