@@ -6,6 +6,8 @@ using Application.Common.Abstractions;
 using Application.Common.Extensions;
 using WebAPI.Filters;
 using Application.Core.Interfaces.Core;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace WebAPI.Controllers
 {
@@ -159,6 +161,20 @@ namespace WebAPI.Controllers
 
             return File(fileData, "application/octetstream", fileName);
 
+        }
+        /// <summary>
+        /// Import Employee From Excels
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("import")]
+        public async Task<IActionResult> ImportEmployee(IFormFile file)
+        {
+            var count = await _employeeServices.Import(file);
+            if (count == 0)
+                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+            else
+                return Ok(new { code = ResponseCode.SystemError, message = "Error At Row "+count });
         }
     }
 }
