@@ -87,7 +87,7 @@ namespace Application.Core.Services.Core
 
         private bool CheckExistedDeparment(DepartmentRequest department)
         {
-            return departmentRepository.GetQuery().Where(x => x.name == department.name).Any();
+            return departmentRepository.GetQuery().ExcludeSoftDeleted().Where(x => x.name == department.name).Any();
         }
     }
 }
