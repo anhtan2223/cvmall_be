@@ -293,7 +293,7 @@ namespace Application.Core.Services.Core
                         Employee = x.Employee,
                         Timesheet = x.Timesheet,
                 })
-                .Where(x => x.Employee.EmployeeDepartments == null ? false : x.Employee.EmployeeDepartments.Any(ed => ed.Department.name.Equals("Phòng dự án")))
+                .Where(x => x.Employee.EmployeeDepartments == null ? false : x.Employee.EmployeeDepartments.Any(ed => ed.Department.name.Equals("Phòng Sản xuất")))
                 .Where(x => string.IsNullOrEmpty(request.search) || x.full_name.ToLower().Contains(request.search.ToLower()))
                 .SortBy(request.sort ?? "employee_id.asc");
 
