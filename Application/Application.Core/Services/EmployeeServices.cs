@@ -121,7 +121,7 @@ namespace Application.Core.Services.Core
         {
             var count = 0;
 
-            string pattern = @"^VHEC-\d+$";
+            string pattern = @"^VHEC-\d{4}$";
             Regex regex = new Regex(pattern);
             if (!regex.IsMatch(request.employee_code) || await CheckEmployeeCode(request.employee_code))
             {

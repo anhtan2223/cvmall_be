@@ -176,6 +176,18 @@ namespace WebAPI.Controllers
             else
                 return Ok(new { code = ResponseCode.SystemError, message = "Error At Row "+count });
         }
+
+        /// <summary>
+        /// Check employee code
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("check_code")]
+        public async Task<IActionResult> CheckEmployeeCode(string employee_code)
+        {
+            var isExisted = await _employeeServices.CheckEmployeeCode(employee_code);
+            return Ok(isExisted);
+        }
     }
 }
 
