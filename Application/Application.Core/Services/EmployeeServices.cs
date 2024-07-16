@@ -17,6 +17,7 @@ using DocumentFormat.OpenXml;
 using Framework.Core.Helpers;
 using Framework.Core.Helpers.Excel;
 using Application.Common.Extensions;
+using Microsoft.Extensions.Hosting;
 
 
 namespace Application.Core.Services.Core
@@ -25,13 +26,14 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<Employee> employeeRepository;
         private ILocalizeServices ls { get; set; }
-        private string _templatePath = "../../Presentation/WebAPI/wwwroot/Assets/Employee/Employee_Template.xlsx";
+        private string _templatePath;
 
 
-        public EmployeeServices(IUnitOfWork _unitOfWork, IMapper _mapper, ILocalizeServices _ls) : base(_unitOfWork, _mapper)
+        public EmployeeServices(IUnitOfWork _unitOfWork, IMapper _mapper, ILocalizeServices _ls, IHostEnvironment _env) : base(_unitOfWork, _mapper)
         {
             employeeRepository = _unitOfWork.GetRepository<Employee>();
             ls = _ls;
+            _templatePath = Path.Combine(_env.ContentRootPath, "wwwroot", "Assets", "Employee", "Employee_Template.xlsx");
         }
 
         public async Task<PagedList<EmployeeResponse>> GetPaged(RequestEmployeePaged request)
