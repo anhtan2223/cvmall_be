@@ -162,7 +162,7 @@ namespace WebAPI.Controllers.Core
             };
 
             var fileStream = await CsvHelpers.ExportCsv(dataResponse.data.ToList(), csvItems);
-            return File(fileStream, "application/octetstream", file_name);
+            return File(fileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file_name);
         }
 
         /// <summary>
@@ -186,7 +186,7 @@ namespace WebAPI.Controllers.Core
             };
             var fileStream = await ExcelHelpers.Export(dataResponse.data.ToList(), excelItems);
 
-            return File(fileStream, "application/octetstream", file_name);
+            return File(fileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file_name);
         }
     }
 }
