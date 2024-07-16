@@ -83,6 +83,7 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 app.ConfigureCoreDb();
+app.UseStaticFiles();
 
 // global error handler
 app.UseMiddleware<ErrorHandlerMiddleware>();
