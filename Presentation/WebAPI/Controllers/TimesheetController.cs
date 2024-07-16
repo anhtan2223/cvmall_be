@@ -169,7 +169,7 @@ namespace WebAPI.Controllers
             if (fileData == null)
                 return BadRequest(new { code = ResponseCode.NotFound, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_007) });
 
-            return File(fileData, "application/octetstream", fileName);
+            return File(fileData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
 
         }
     }

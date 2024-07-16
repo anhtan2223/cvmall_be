@@ -81,7 +81,7 @@ namespace WebAPI.Controllers
                     workbookpart?.FillGridData(data.data.ToList(), excelItems);
 
                 }
-                return File(ms.ToArray(), "application/octetstream", fileName);
+                return File(ms.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
         }
 
