@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\Sale\**" />
-    <Compile Remove="wwwroot\**" />
-    <Content Remove="Controllers\Sale\**" />
-    <Content Remove="wwwroot\**" />
-    <EmbeddedResource Remove="Controllers\Sale\**" />
-    <EmbeddedResource Remove="wwwroot\**" />
-    <None Remove="Controllers\Sale\**" />
-    <None Remove="wwwroot\**" />
+	  <Compile Remove="Controllers\Sale\**" />
+	  <Content Remove="Controllers\Sale\**" />
+	  <EmbeddedResource Remove="Controllers\Sale\**" />
+	  <None Remove="Controllers\Sale\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <Content Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
