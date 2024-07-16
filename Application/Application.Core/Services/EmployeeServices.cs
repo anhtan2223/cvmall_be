@@ -25,7 +25,7 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<Employee> employeeRepository;
         private ILocalizeServices ls { get; set; }
-        private string _templatePath = "../../Presentation/WebAPI/Assets/Employee/Employee_Template.xlsx";
+        private string _templatePath = "../../Presentation/WebAPI/wwwroot/Assets/Employee/Employee_Template.xlsx";
 
 
         public EmployeeServices(IUnitOfWork _unitOfWork, IMapper _mapper, ILocalizeServices _ls) : base(_unitOfWork, _mapper)
