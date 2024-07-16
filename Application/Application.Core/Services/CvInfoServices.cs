@@ -11,6 +11,7 @@ using Framework.Core.Helpers;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System.IO.Compression;
+using Microsoft.Extensions.Hosting;
 
 namespace Application.Core.Services.Core
 {
@@ -18,11 +19,12 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<CvInfo> cvInfoRepository;
         private int _minNumberOfProject = 6;
-        private string _templatePath = "../../Presentation/WebAPI/wwwroot/Assets/CvInfo";
+        private string _templatePath;
 
-        public CvInfoServices(IUnitOfWork _unitOfWork, IMapper _mapper) : base(_unitOfWork, _mapper)
+        public CvInfoServices(IUnitOfWork _unitOfWork, IMapper _mapper, IHostEnvironment _env) : base(_unitOfWork, _mapper)
         {
             cvInfoRepository = _unitOfWork.GetRepository<CvInfo>();
+            _templatePath = Path.Combine(_env.ContentRootPath, "wwwroot", "Assets", "CvInfo");
         }
 
         public async Task<PagedList<CvInfoResponse>> GetPaged(RequestPaged request)
@@ -332,7 +334,7 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                await AddFileToMemoryStream(ms, $"{_templatePath}/CV_{selectedLang}.xlsx");
+                await AddFileToMemoryStream(ms, Path.Combine(_templatePath, $"CV_{selectedLang}.xlsx"));
 
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
@@ -354,7 +356,7 @@ namespace Application.Core.Services.Core
 
             using (var ms = new MemoryStream())
             {
-                await AddFileToMemoryStream(ms, $"{_templatePath}/CV_{selectedLang}.xlsx");
+                await AddFileToMemoryStream(ms, Path.Combine(_templatePath, $"CV_{selectedLang}.xlsx"));
 
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(ms, true))
                 {
