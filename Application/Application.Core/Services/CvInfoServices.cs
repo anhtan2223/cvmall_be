@@ -18,7 +18,7 @@ namespace Application.Core.Services.Core
     {
         private readonly IRepository<CvInfo> cvInfoRepository;
         private int _minNumberOfProject = 6;
-        private string _templatePath = "../../Presentation/WebAPI/Assets/CvInfo";
+        private string _templatePath = "../../Presentation/WebAPI/wwwroot/Assets/CvInfo";
 
         public CvInfoServices(IUnitOfWork _unitOfWork, IMapper _mapper) : base(_unitOfWork, _mapper)
         {
