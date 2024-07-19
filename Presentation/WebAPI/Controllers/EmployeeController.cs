@@ -170,11 +170,12 @@ namespace WebAPI.Controllers
         [Route("import")]
         public async Task<IActionResult> ImportEmployee(IFormFile file)
         {
-            var count = await _employeeServices.Import(file);
-            if (count == 0)
-                return Ok(new { code = ResponseCode.Success, message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) });
+            var message = await _employeeServices.Import(file);
+
+            if (message == ls.Get(Modules.Core, Screen.Message, MessageKey.I_001))
+                return Ok(new { code = ResponseCode.Success, message  });
             else
-                return Ok(new { code = ResponseCode.SystemError, message = "Error At Row "+count });
+                return Ok(new { code = ResponseCode.SystemError, message });
         }
 
         /// <summary>

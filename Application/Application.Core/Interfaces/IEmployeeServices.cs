@@ -18,6 +18,6 @@ namespace Application.Core.Interfaces.Core
         Task<IList<EmployeeResponse>> GetGroups();
         Task<byte[]> ExportAllExcel();
         Task<byte[]> ExportTemplateExcel();
-        Task<int> Import(IFormFile file);
+        Task<string> Import(IFormFile file);
     }
 }

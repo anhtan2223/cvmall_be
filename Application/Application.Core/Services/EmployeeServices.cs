@@ -152,7 +152,7 @@ namespace Application.Core.Services.Core
             if (entity == null)
                 return count;
 
-            string pattern = @"^VHEC-\d+$";
+            string pattern = @"^VHEC-\d{4}$";
             Regex regex = new Regex(pattern);
             if (!regex.IsMatch(request.employee_code) || (await CheckEmployeeCode(request.employee_code) && entity.employee_code != request.employee_code))
             {
@@ -353,42 +353,75 @@ namespace Application.Core.Services.Core
         }
 
         #endregion
-        public async Task<int> Import(IFormFile file)
+        public async Task<string> Import(IFormFile file)
         {
             var count = 0;
+            var message = ls.Get(Modules.Core, Screen.Message, MessageKey.I_001) ;
             using (var transaction = await _unitOfWork.BeginTransactionAsync())
             {
                 try
                 {
+                    List<string> fieldName = new List<string>{
+                        "STT " , "Employee Code " , "Name " , "Initial Name " , "Branch " ,
+                        "Department " , "Position " , "State " , "Phone " ,
+                        "Company Email " , "Personal Email " , "BirthDay " ,
+                        "Permanet Address " , "Current Address " , "ID Number " ,
+                        "Date Issue " , "Location Issue " , "Married State "
+                    };
                     Dictionary<string, int> stateMappings = new Dictionary<string, int>
                     {
-                        { "Đang làm việc", 0 },
-                        { "Đang thử việc", 1 },
-                        { "Đang thực tập", 2 },
-                        { "Đã nghỉ việc", 3 }
+                        { "đang làm việc", 0 },
+                        { "đang thử việc", 1 },
+                        { "đang thực tập", 2 },
+                        { "đã nghỉ việc", 3 }
                     };
                     Dictionary<string, bool> marriedMappings = new Dictionary<string, bool>
                     {
-                        { "Độc thân", false },
-                        { "Đã kết hôn", true }
+                        { "độc thân", false },
+                        { "đã kết hôn", true }
                     };
-                    string pattern = @"^VHEC-\d+$";
+                    List<string> branchs = new List<string>{
+                        "cần thơ" , "nha trang" , "hà nội" , "japan"
+                    };
+                    string pattern = @"^VHEC-\d{4}$";
                     Regex regex = new Regex(pattern);
                     List<List<string>> excelData = ReadExcelData(file);
-                    // List<EmployeeRequest> listE = new List<EmployeeRequest>() ;
                     foreach (var employee in excelData)
                     {
-                        if(!int.TryParse(employee[0] , out count))
+                        if(employee.Count < 18 || employee[0] == "STT" || employee.All(x => x==null))
                             continue ;
-                        foreach (var item in new List<int>{1,2,3,4,7,11})
+                        
+                        count++ ;
+                        
+                        foreach (var item in new List<int>{1,2,3,4,7,8,9,11,14})
                         {
                             if(employee[item] == null)
-                                throw new ArgumentException();
+                                throw new ArgumentException(fieldName[item] + " Not Null");
                         }
-                        if(!stateMappings.ContainsKey(employee[7]))
-                            throw new ArgumentException();
-                        if(!marriedMappings.ContainsKey(employee[17]))
-                            throw new ArgumentException();
+
+                        var isValidEmployeeCode = !await employeeRepository
+                                                    .GetQuery()
+                                                    .AnyAsync(x => x.employee_code == employee[1]);                          
+                        if(!isValidEmployeeCode)
+                            throw new ArgumentException("Employee Code Already Exists");
+
+                        if(!regex.IsMatch(employee[1]))
+                            throw new ArgumentException("Employee Code Invalid Value ");
+                        if(!branchs.Contains(employee[4].ToLower()))
+                            throw new ArgumentException(fieldName[4]+ employee[4].ToLower() + " Is Invalid Value");
+                        if(!stateMappings.ContainsKey(employee[7].ToLower()))
+                            throw new ArgumentException(fieldName[7]+ employee[7] + " Is Invalid Value");
+                        if(!Regex.IsMatch(employee[8] , @"^\d+$"))
+                            throw new ArgumentException(fieldName[8]+ employee[8] + " Is Invalid Value");
+                        if(!Regex.IsMatch(employee[9] , @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+                            throw new ArgumentException(fieldName[9]+ employee[9] + " Is Invalid Value");
+                        if(employee[10]!=null && !Regex.IsMatch(employee[10] , @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+                            throw new ArgumentException(fieldName[10]+ employee[10] + " Is Invalid Value");
+                        if(!Regex.IsMatch(employee[14] , @"^\d+$"))
+                            throw new ArgumentException(fieldName[14]+ employee[14] + " Is Invalid Value");
+                        if(!marriedMappings.ContainsKey(employee[17].ToLower()))
+                            throw new ArgumentException(fieldName[17]+ employee[17] + " Is Invalid Value");
+                        
                         
                         var request = new EmployeeRequest{
                             employee_code       = employee[1] ,
@@ -398,7 +431,7 @@ namespace Application.Core.Services.Core
                             current_group       = ""          ,
                             EmployeeDepartments = (employee[5] == null) ? null : GetDepartmentFromString(employee[5]) ,
                             EmployeePositions   = (employee[6] == null) ? null : GetPositionFromString(employee[6]) ,
-                            state               = stateMappings[employee[7]] ,
+                            state               = stateMappings[employee[7].ToLower()] ,
                             phone               = employee[8] ,
                             company_email       = employee[9] ,
                             personal_email      = employee[10] ,
@@ -408,16 +441,8 @@ namespace Application.Core.Services.Core
                             id_number           = employee[14] ,
                             date_issue          = (employee[15] == null) ? null : StringToDateTime(employee[15]) ,
                             location_issue      = employee[16] ,
-                            is_married          = marriedMappings[employee[17]]
+                            is_married          = marriedMappings[employee[17].ToLower()]
                         };
-
-                        var isValidEmployeeCode = !await employeeRepository
-                                                    .GetQuery()
-                                                    .AnyAsync(x => x.employee_code == request.employee_code);
-                                                    
-                        if(!isValidEmployeeCode || !regex.IsMatch(request.employee_code))
-                            throw new ArgumentException();
-
                         var Employee = _mapper.Map<Employee>(request);
                         await employeeRepository.AddEntityAsync(Employee) ;
                         await _unitOfWork.SaveChangesAsync();
@@ -428,10 +453,13 @@ namespace Application.Core.Services.Core
                 }
                 catch (Exception ex)
                 {
+                    message = ex.Message ;
                     transaction.Rollback();
                 }
             }
-            return count ;
+            if(count == 0)
+                return ls.Get(Modules.Core, Screen.Message, MessageKey.I_001);
+            return "Error At Row " +count + ": "+ message ;
         }
         private DateTime StringToDateTime(string input)
         {
@@ -444,12 +472,12 @@ namespace Application.Core.Services.Core
         private List<EmployeePositionRequest> GetPositionFromString(string input)
         {
             var result = new List<EmployeePositionRequest>() ;
-            var list  = input.Split(",");
+            var list  = input.Split(",").Select(x => x.ToLower()).ToList();
             var position = _unitOfWork
                                 .GetRepository<Position>()
                                 .GetQuery()
                                 .ExcludeSoftDeleted()
-                                .Where(x => list.Contains(x.name));
+                                .Where(x => list.Contains(x.name.ToLower()));
             foreach (var p in position)
             {
                 result.Add(new EmployeePositionRequest{
@@ -461,12 +489,12 @@ namespace Application.Core.Services.Core
         private List<EmployeeDepartmentRequest> GetDepartmentFromString(string input)
         {
             var result = new List<EmployeeDepartmentRequest>() ;
-            var list  = input.Split(",");
+            var list  = input.Split(",").Select(x => x.ToLower()).ToList();
             var department = _unitOfWork
                                 .GetRepository<Department>()
                                 .GetQuery()
                                 .ExcludeSoftDeleted()
-                                .Where(x => list.Contains(x.name));
+                                .Where(x => list.Contains(x.name.ToLower()));
             foreach (var d in department)
             {
                 result.Add(new EmployeeDepartmentRequest{
