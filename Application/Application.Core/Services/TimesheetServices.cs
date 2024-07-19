@@ -110,25 +110,24 @@ namespace Application.Core.Services.Core
                             {
                                 continue;
                             }
-                            if (DateTime.Now.Month != request.month_year.Month
-                                || DateTime.Now.Year != request.month_year.Year)
+                            if (DateTime.Now.Month == request.month_year.Month
+                                && DateTime.Now.Year == request.month_year.Year)
                             {
-                                throw new ArgumentException();
-                            }
-                            var employee = await employeeRepository
-                            .GetQuery()
-                            .FindActiveById(request.employee_id)
-                            .FirstOrDefaultAsync();
-                            if (employee != null)
-                            {
-                                employee.current_group = request.group;
-                                await employeeRepository.UpdateEntityAsync(employee);
+                                var employee = await employeeRepository
+                                .GetQuery()
+                                .FindActiveById(request.employee_id)
+                                .FirstOrDefaultAsync();
+                                if (employee != null)
+                                {
+                                    employee.current_group = request.group;
+                                    await employeeRepository.UpdateEntityAsync(employee);
+                                }
                             }
 
                             var entity = _mapper.Map<Timesheet>(request);
 
                             await timesheetRepository.AddEntityAsync(entity);
-
+                            
                         } else {
                             var entity = timesheetRepository
                             .GetQuery()
@@ -137,12 +136,10 @@ namespace Application.Core.Services.Core
                             if (entity == null)
                                 throw new ArgumentException();
 
-                            if(!entity.group.Equals(request.group)) {
-                                if (DateTime.Now.Month != request.month_year.Month
-                                    || DateTime.Now.Year != request.month_year.Year)
-                                {
-                                    throw new ArgumentException();
-                                }
+                            if(!entity.group.Equals(request.group) 
+                                && DateTime.Now.Month == request.month_year.Month
+                                && DateTime.Now.Year == request.month_year.Year)
+                            {
                                 var employee = await employeeRepository
                                 .GetQuery()
                                 .FindActiveById(entity.employee_id)
