@@ -116,6 +116,7 @@ namespace Application.Core.Services.Core
         {
             return await _unitOfWork.GetRepository<Employee>()
                                     .GetQuery()
+                                    .ExcludeSoftDeleted()
                                     .AnyAsync(x => x.employee_code == employeeCode);
         }
 
@@ -401,6 +402,7 @@ namespace Application.Core.Services.Core
 
                         var isValidEmployeeCode = !await employeeRepository
                                                     .GetQuery()
+                                                    .ExcludeSoftDeleted()
                                                     .AnyAsync(x => x.employee_code == employee[1]);                          
                         if(!isValidEmployeeCode)
                             throw new ArgumentException("Employee Code Already Exists");
