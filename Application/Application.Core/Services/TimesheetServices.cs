@@ -15,6 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 using Framework.Core.Helpers.Excel;
 using Application.Common.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Http;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Application.Core.Services.Core
 {
@@ -239,7 +242,7 @@ namespace Application.Core.Services.Core
                     int quantity = list.Count;
                     if (quantity >= 57)
                     {
-                        workbookpart?.SetBorderAll($"B61:K{quantity+4}", BorderStyleValues.Thin);
+                        workbookpart?.SetBorderAll($"B61:K{quantity + 4}", BorderStyleValues.Thin);
                     }
 
                     foreach (var (timesheet, index) in list.Select((item, index) => (item, index)))
@@ -347,5 +350,158 @@ namespace Application.Core.Services.Core
             }
         }
         #endregion
+        public async Task<int> ImportLateEarly(IFormFile file, DateTime month)
+        {
+            var list = GetLateEarlies(file);
+            foreach (var item in list)
+            {
+                try
+                {
+                    var employee = employeeRepository.GetQuery().FirstOrDefault(x => x.employee_code == item.id_code) ;
+                    if(employee != null){
+                        var timesheet = timesheetRepository.GetQuery().FirstOrDefault(x => x.employee_id == employee.id && x.month_year.Month == month.Month && x.month_year.Year == month.Year) ;
+                        if(timesheet != null){
+                            timesheet.late_early_departures = item.late_early_departures ;
+                            await timesheetRepository.UpdateEntityAsync(timesheet) ;
+                        }else{
+                            await timesheetRepository.AddEntityAsync(new Timesheet{
+                                employee_id = employee.id ,
+                                group = employee.current_group ,
+                                month_year = month ,
+                                late_early_departures = item.late_early_departures 
+                            });
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+            }
+            var count = await _unitOfWork.SaveChangesAsync() ;
+
+            return  count ;
+        }
+        private class GetLateEarly
+        {
+            public string id_code { get; set; }
+            public int late_early_departures { get; set; }
+        }
+        private List<GetLateEarly> GetLateEarlies(IFormFile file)
+        {
+            List<List<string>> excelData = ReadExcelData(file);
+            var result = new List<GetLateEarly>();
+
+            if (excelData[0][0] == "BẢNG CHI TIẾT CHẤM CÔNG")
+            {
+                var value = new List<dynamic>();
+                string pattern = @"Mã nhân viên:\s*(\S+)\s*Tên nhân viên:\s*([^\s].*?)\s*Phòng ban:";
+                Regex regex = new Regex(pattern);
+                for (int i = 0; i < excelData.Count; i++)
+                {
+                    try
+                    {
+                        if (excelData[i][0] != null)
+                        {
+                            Match match = regex.Match(excelData[i][0]);
+                            if (match.Success)
+                            {
+
+                                result.Add(new GetLateEarly
+                                {
+                                    id_code = match.Groups[1].Value,
+                                    late_early_departures = CountLateEarlyDeparture(excelData[i + 1][7], excelData[i + 2][7])
+                                });
+                            }
+                        }
+                    }
+                    catch (System.Exception)
+                    {
+                        continue;
+                    }
+                }
+                return result;
+
+            }
+            else
+            {
+                foreach (var item in excelData)
+                {
+                    try
+                    {
+                        var index = result.FindIndex(x => x.id_code == item[0]);
+                        if (index >= 0)
+                        {
+                            result[index].late_early_departures += CountLateEarlyDeparture(item[12], item[13]);
+                        }
+                        else
+                        {
+                            var test = new GetLateEarly
+                            {
+                                id_code = item[0],
+                                late_early_departures = CountLateEarlyDeparture(item[12], item[13])
+                            };
+
+                            result.Add(test);
+                        }
+                    }
+                    catch (System.Exception)
+                    {
+                        continue;
+                    }
+                }
+                return result;
+            }
+        }
+        private int CountLateEarlyDeparture(string late, string early)
+        {
+            var a = int.Parse(late);
+            var b = int.Parse(early);
+            var count = 0;
+            if (a > 0)
+                count++;
+            if (b > 0)
+                count++;
+            return count;
+        }
+        private List<List<string>> ReadExcelData(IFormFile file)
+        {
+            List<List<string>> data = new List<List<string>>();
+
+            using (var stream = new MemoryStream())
+            {
+                file.CopyTo(stream);
+                stream.Position = 0;
+
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(stream, false))
+                {
+                    WorkbookPart workbookPart = document.WorkbookPart;
+                    WorksheetPart worksheetPart = workbookPart.WorksheetParts.First();
+                    SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+
+                    foreach (Row row in sheetData.Elements<Row>())
+                    {
+                        List<string> rowData = new List<string>();
+                        foreach (Cell cell in row.Elements<Cell>())
+                        {
+                            rowData.Add(GetCellValue(document, cell));
+                        }
+                        data.Add(rowData);
+                    }
+                }
+            }
+            return data;
+        }
+        private string GetCellValue(SpreadsheetDocument document, Cell cell)
+        {
+            string value = cell.CellValue?.InnerText;
+
+            if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+            {
+                return document.WorkbookPart.SharedStringTablePart.SharedStringTable
+                    .Elements<SharedStringItem>().ElementAt(int.Parse(value)).InnerText;
+            }
+            return value;
+        }
     }
 }

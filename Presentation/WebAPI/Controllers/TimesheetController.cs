@@ -172,6 +172,20 @@ namespace WebAPI.Controllers
             return File(fileData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
 
         }
+        /// <summary>
+        /// Import Late Early Departure From Excels
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("import-late-early")]
+        public async Task<IActionResult> Test2(IFormFile file, DateTime month)
+        {
+            var count = await timesheetServices.ImportLateEarly(file, month);
+            if (count >= 1)
+                return Ok(new { code = ResponseCode.Success, message = $"Add Success : {count} Element At {month.Month}/{month.Year} "  });
+            else
+                return Ok(new { code = ResponseCode.SystemError, message = ls.Get(Modules.Core, Screen.Message, MessageKey.E_002) });
+        }
     }
 }
 

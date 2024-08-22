@@ -2,6 +2,7 @@
 using Application.Core.Contracts;
 using Application.Core.Services.Core;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Core.Interfaces.Core
 {
@@ -14,5 +15,6 @@ namespace Application.Core.Interfaces.Core
         Task<int> UpdateMulti(List<TimesheetRequest> requestList);
         // Task<int> Delete(Guid id);
         Task<byte[]> ExportAllExcel(TimesheetRequestPaged request);
+        Task<int> ImportLateEarly(IFormFile file , DateTime month) ;
     }
 }
